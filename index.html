@@ -268,6 +268,40 @@
     el.value = Number(angka).toLocaleString("id-ID");
   }
 
+  // 1. FUNGSI LOAD SALDO (DIPERBARUI)
+  function loadSaldo() {
+    // Menambahkan mode: 'cors' dan redirect: 'follow' agar browser mau mengikuti redirect dari Google
+    fetch(SCRIPT_URL, {
+      method: "GET",
+      redirect: "follow"
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then(data => {
+        let html = "";
+        if (data && data.length > 0) {
+          data.forEach(function(r) {
+            html += "<tr>" +
+              "<td>" + r.nama + "</td>" +
+              "<td class='right'>" + Number(r.saldo).toLocaleString("id-ID") + "</td>" +
+              "</tr>";
+          });
+        } else {
+          html = "<tr><td colspan='2' style='text-align:center;'>Tidak ada data</td></tr>";
+        }
+        document.getElementById("saldo").innerHTML = html;
+      })
+      .catch(err => {
+        console.error("Error loading saldo:", err);
+        document.getElementById("saldo").innerHTML = "<tr><td colspan='2' style='text-align:center; color:red;'>Gagal memuat saldo</td></tr>";
+      });
+  }
+
+  // 2. FUNGSI KIRIM (DIPERBARUI MENGGUNAKAN text/plain AGAR MENGHINDARI CORS PREFLIGHT)
   function kirim() {
     let nominal = document.getElementById("nominal").value;
 
@@ -287,9 +321,11 @@
     statusEl.style.color = "#15803d";
     statusEl.innerHTML = "Mengirim...";
 
+    // Menggunakan text/plain agar browser tidak mengirim request OPTIONS (Preflight) yang sering diblokir Google
     fetch(SCRIPT_URL, {
       method: 'POST',
       mode: 'cors',
+      redirect: 'follow',
       headers: {
         'Content-Type': 'text/plain;charset=utf-8',
       },
@@ -297,8 +333,8 @@
     })
     .then(response => response.json())
     .then(res => {
-      if (res.status === "success") {
-        statusEl.innerHTML = "✅ " + res.message;
+      if (res.status === true || res.status === "success") {
+        statusEl.innerHTML = "✅ " + (res.message || "Berhasil disimpan");
         document.getElementById("nominal").value = "";
         document.getElementById("keterangan").value = "";
         loadSaldo();
@@ -312,29 +348,6 @@
       statusEl.style.color = "#b91c1c";
       statusEl.innerHTML = "❌ Terjadi kesalahan jaringan";
     });
-  }
-
-  function loadSaldo() {
-    fetch(SCRIPT_URL)
-      .then(response => response.json())
-      .then(data => {
-        let html = "";
-        if (data && data.length > 0) {
-          data.forEach(function(r) {
-            html += "<tr>" +
-              "<td>" + r.nama + "</td>" +
-              "<td class='right'>" + Number(r.saldo).toLocaleString("id-ID") + "</td>" +
-              "</tr>";
-          });
-        } else {
-          html = "<tr><td colspan='2' style='text-align:center;'>Tidak ada data</td></tr>";
-        }
-        document.getElementById("saldo").innerHTML = html;
-      })
-      .catch(err => {
-        console.error("Error loading saldo:", err);
-        document.getElementById("saldo").innerHTML = "<tr><td colspan='2' style='text-align:center; color:red;'>Gagal memuat saldo</td></tr>";
-      });
   }
 
   // Load saldo pertama kali saat halaman dibuka
