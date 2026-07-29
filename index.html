@@ -137,7 +137,6 @@
       box-shadow: none;
     }
 
-    /* Style khusus saat berhasil dikirim */
     button.btn-success {
       background: #16a34a !important;
       box-shadow: 0 4px 10px rgba(22, 163, 74, 0.3) !important;
@@ -148,7 +147,6 @@
       text-align: center;
       font-weight: 800;
       font-size: 17px;
-      color: #15803d;
       min-height: 24px;
       transition: opacity 0.3s ease;
     }
@@ -193,7 +191,7 @@
       font-size: 17px;
       padding: 12px 10px;
       border-bottom: 2px solid #cbd5e1;
-      text-align: center; /* Ditengahkan */
+      text-align: center;
     }
 
     td {
@@ -202,7 +200,7 @@
       color: #0f172a;
       border-bottom: 1px solid #e2e8f0;
       word-wrap: break-word;
-      text-align: center; /* Ditengahkan */
+      text-align: center;
     }
 
     tr:last-child td {
@@ -274,6 +272,7 @@
 
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1ZI7cwjU9aJIkMral63401WwjxQ4o-8MOjKZoB8Gh1C_u21Ti2LNS0WDU3t2TYJ8Qtg/exec";
+  let pollInterval = null;
 
   function formatNominal(el) {
     let angka = el.value.replace(/\D/g, '');
@@ -332,11 +331,12 @@
       keterangan: document.getElementById("keterangan").value
     };
 
-    // Ubah status & disable tombol saat proses berlangsung
     btn.disabled = true;
     btn.innerText = "MENGIRIM...";
-    statusEl.style.color = "#15803d";
-    statusEl.innerHTML = "⏳ Memproses transaksi...";
+    
+    // Status awal: Merah & Menunggu Approval
+    statusEl.style.color = "#b91c1c"; // Warna merah
+    statusEl.innerHTML = "⏳ Transaksi dikirim dan menunggu approval...";
 
     fetch(SCRIPT_URL, {
       method: 'POST',
@@ -350,26 +350,19 @@
     .then(response => response.json())
     .then(res => {
       if (res.status === true || res.status === "success") {
-        // Visual Indikator Berhasil pada Tombol
-        btn.classList.add("btn-success");
-        btn.innerText = "✔ BERHASIL DISIMPAN";
-        
-        statusEl.style.color = "#15803d";
-        statusEl.innerHTML = "✅ " + (res.message || "Transaksi berhasil diterima!");
-        
-        // Reset Input
+        let idTransaksi = res.id || res.transactionId;
+
+        // Reset Form Input
         document.getElementById("nominal").value = "";
         document.getElementById("keterangan").value = "";
-        
-        // Perbarui data tabel saldo
-        loadSaldo();
 
-        // Kembalikan status tombol setelah 5 detik
-        setTimeout(() => {
-          btn.classList.remove("btn-success");
-          btn.innerText = "KIRIM";
-          btn.disabled = false;
-        }, 5000);
+        if (idTransaksi) {
+          // Mulai pengecekan status approval secara berkala (setiap 3 detik)
+          cekStatusApproval(idTransaksi);
+        } else {
+          // Fallback jika backend langsung menyetujui tanpa ID
+          transaksiDisetujui();
+        }
 
       } else {
         btn.innerText = "KIRIM";
@@ -385,6 +378,44 @@
       statusEl.style.color = "#b91c1c";
       statusEl.innerHTML = "❌ Terjadi kesalahan jaringan";
     });
+  }
+
+  function cekStatusApproval(id) {
+    if (pollInterval) clearInterval(pollInterval);
+
+    pollInterval = setInterval(() => {
+      fetch(`${SCRIPT_URL}?action=checkStatus&id=${id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.approved) {
+            clearInterval(pollInterval);
+            transaksiDisetujui();
+          }
+        })
+        .catch(err => console.error("Gagal memeriksa status:", err));
+    }, 3000); // Pengecekan setiap 3 detik
+  }
+
+  function transaksiDisetujui() {
+    let btn = document.getElementById("btnKirim");
+    let statusEl = document.getElementById("status");
+
+    // Ubah tampilan menjadi disetujui (Hijau & Dan telah dicatat)
+    btn.classList.add("btn-success");
+    btn.innerText = "✔ BERHASIL DISIMPAN";
+
+    statusEl.style.color = "#15803d"; // Warna hijau
+    statusEl.innerHTML = "✅ Transaksi dikirim dan telah dicatat";
+
+    // Refresh tabel saldo
+    loadSaldo();
+
+    // Kembalikan tombol ke kondisi awal setelah 30 detik
+    setTimeout(() => {
+      btn.classList.remove("btn-success");
+      btn.innerText = "KIRIM";
+      btn.disabled = false;
+    }, 30000);
   }
 
   // Load saldo pertama kali saat halaman dibuka
