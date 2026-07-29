@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <title>Input Transaksi</title>
+
+  <style>
+    /* Reset & Layout Rules */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 10px;
+      background: #f0f2f5;
+      color: #111;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .card {
+      background: #ffffff;
+      padding: 18px 12px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 100%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 18px;
+    }
+
+    label.section-title {
+      font-weight: 800;
+      display: block;
+      margin-top: 20px;
+      margin-bottom: 8px;
+      font-size: 18px;
+      color: #0f172a;
+    }
+
+    .radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .radio-group label {
+      flex: 1 1 calc(33.33% - 8px);
+      min-width: 60px;
+      text-align: center;
+      padding: 14px 4px;
+      background: #f8fafc;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .radio-group input[type="radio"] {
+      accent-color: #e67e22;
+      width: 20px;
+      height: 20px;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      max-width: 100%;
+      padding: 14px;
+      margin-top: 6px;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 20px;
+      font-weight: 600;
+      color: #0f172a;
+      outline: none;
+      background: #fff;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: #e67e22;
+      box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.25);
+    }
+
+    .sub-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #475569;
+      margin-top: 6px;
+      line-height: 1.3;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      margin-top: 24px;
+      background: #e67e22;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 20px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
+    }
+
+    button:active {
+      background: #d35400;
+      transform: scale(0.98);
+    }
+
+    #status {
+      margin-top: 16px;
+      text-align: center;
+      font-weight: 800;
+      font-size: 17px;
+      color: #15803d;
+    }
+
+    .saldo-header {
+      margin-top: 28px;
+      border-top: 2px dashed #cbd5e1;
+      padding-top: 20px;
+    }
+
+    .saldo-title {
+      color: #e67e22;
+      font-weight: 800;
+      font-size: 22px;
+      text-align: center;
+    }
+
+    .keterangan {
+      font-size: 14px;
+      font-weight: 600;
+      color: #64748b;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    table {
+      width: 100%;
+      max-width: 100%;
+      table-layout: fixed;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 8px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid #cbd5e1;
+    }
+
+    th {
+      background: #e2e8f0;
+      color: #0f172a;
+      font-weight: 800;
+      font-size: 17px;
+      padding: 12px 10px;
+      border-bottom: 2px solid #cbd5e1;
+    }
+
+    td {
+      padding: 14px 10px;
+      font-size: 18px;
+      color: #0f172a;
+      border-bottom: 1px solid #e2e8f0;
+      word-wrap: break-word;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .right {
+      text-align: right;
+      font-weight: 800;
+      color: #1e293b;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <h2>INPUT TRANSAKSI</h2>
+
+  <label class="section-title">Kode</label>
+  <div class="radio-group">
+    <label><input type="radio" name="kode" value="HA" checked> HA</label>
+    <label><input type="radio" name="kode" value="RIN"> RIN</label>
+    <label><input type="radio" name="kode" value="ZA"> ZA</label>
+    <label><input type="radio" name="kode" value="NAN"> NAN</label>
+    <label><input type="radio" name="kode" value="KAM"> KAM</label>
+  </div>
+
+  <label class="section-title">Jenis</label>
+  <div class="radio-group">
+    <label><input type="radio" name="jenis" value="Masuk" checked> Masuk</label>
+    <label><input type="radio" name="jenis" value="Keluar"> Keluar</label>
+  </div>
+
+  <label class="section-title">Nominal</label>
+  <input id="nominal" type="text" inputmode="numeric" placeholder="Contoh: 100" oninput="formatNominal(this)">
+  <div class="sub-label">Nominal dalam ribuan. Contoh bila 100.000 maka tulis 100</div>
+
+  <label class="section-title">Uraian</label>
+  <textarea id="keterangan" rows="3" placeholder="Masukkan keterangan..."></textarea>
+
+  <button onclick="kirim()">KIRIM</button>
+
+  <div id="status"></div>
+
+  <div class="saldo-header">
+    <div class="saldo-title">Bank AMi Syariah</div>
+    <div class="keterangan">dalam ribuan rupiah</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align: left; width: 55%;">Nama</th>
+          <th style="text-align: right; width: 45%;">Saldo</th>
+        </tr>
+      </thead>
+      <tbody id="saldo">
+        <tr><td colspan="2" style="text-align:center;">Memuat saldo...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  // GANTI VALUE DI BAWAH DENGAN WEB APP URL DARI GOOGLE APPS SCRIPT ANDA
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx.../exec";
+
+  function formatNominal(el) {
+    let angka = el.value.replace(/\D/g, '');
+    if (angka === "") {
+      el.value = "";
+      return;
+    }
+    el.value = Number(angka).toLocaleString("id-ID");
+  }
+
+  function kirim() {
+    let nominal = document.getElementById("nominal").value;
+
+    if (nominal === "") {
+      alert("Nominal harus diisi");
+      return;
+    }
+
+    let data = {
+      kode: document.querySelector('input[name="kode"]:checked').value,
+      jenis: document.querySelector('input[name="jenis"]:checked').value,
+      nominal: nominal,
+      keterangan: document.getElementById("keterangan").value
+    };
+
+    let statusEl = document.getElementById("status");
+    statusEl.style.color = "#15803d";
+    statusEl.innerHTML = "Mengirim...";
+
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(res => {
+      if (res.status === "success") {
+        statusEl.innerHTML = "✅ " + res.message;
+        document.getElementById("nominal").value = "";
+        document.getElementById("keterangan").value = "";
+        loadSaldo();
+      } else {
+        statusEl.style.color = "#b91c1c";
+        statusEl.innerHTML = "❌ Gagal: " + res.message;
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      statusEl.style.color = "#b91c1c";
+      statusEl.innerHTML = "❌ Terjadi kesalahan jaringan";
+    });
+  }
+
+  function loadSaldo() {
+    fetch(SCRIPT_URL)
+      .then(response => response.json())
+      .then(data => {
+        let html = "";
+        if (data && data.length > 0) {
+          data.forEach(function(r) {
+            html += "<tr>" +
+              "<td>" + r.nama + "</td>" +
+              "<td class='right'>" + Number(r.saldo).toLocaleString("id-ID") + "</td>" +
+              "</tr>";
+          });
+        } else {
+          html = "<tr><td colspan='2' style='text-align:center;'>Tidak ada data</td></tr>";
+        }
+        document.getElementById("saldo").innerHTML = html;
+      })
+      .catch(err => {
+        console.error("Error loading saldo:", err);
+        document.getElementById("saldo").innerHTML = "<tr><td colspan='2' style='text-align:center; color:red;'>Gagal memuat saldo</td></tr>";
+      });
+  }
+
+  // Load saldo pertama kali saat halaman dibuka
+  loadSaldo();
+</script>
+
+</body>
+</html>
