@@ -274,7 +274,7 @@
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1ZI7cwjU9aJIkMral63401WwjxQ4o-8MOjKZoB8Gh1C_u21Ti2LNS0WDU3t2TYJ8Qtg/exec";
   
-  // Cache DOM element references
+  // Cache referensi elemen DOM
   const nominalInput = document.getElementById("nominal");
   const keteranganInput = document.getElementById("keterangan");
   const btnKirim = document.getElementById("btnKirim");
@@ -324,7 +324,7 @@
   function updateOptimisticSaldo(kode, jenis, nominalVal) {
     const numericNominal = parseInt(nominalVal.replace(/\./g, ''), 10) || 0;
     
-    // Cari dan perbarui saldo secara langsung di memori
+    // Update saldo secara instan di memori lokal
     localSaldoData = localSaldoData.map(item => {
       if (item.nama === kode) {
         let currentSaldo = Number(item.saldo);
@@ -334,7 +334,7 @@
       return item;
     });
 
-    // Render ulang tabel secara instan
+    // Render ulang tabel tanpa menunggu respon server
     renderTable(localSaldoData);
   }
 
@@ -355,26 +355,26 @@
       keterangan: keteranganInput.value
     };
 
-    // 1. Simpan backup data lokal untuk rollback jika gagal
+    // 1. Backup saldo sebelumnya untuk rollback jika server error
     const previousSaldoData = JSON.parse(JSON.stringify(localSaldoData));
 
-    // 2. Pembaruan UI Optimistis (Langsung ganti saldo di layar tanpa menunggu respons server)
+    // 2. Tampilkan update saldo di layar secara instan (Optimistic Update)
     updateOptimisticSaldo(kode, jenis, rawNominal);
 
-    // 3. Set visual status pengiriman
+    // 3. Ubah status tombol & indikator
     btnKirim.disabled = true;
     btnKirim.innerText = "MENGIRIM...";
     statusEl.style.color = "#15803d";
     statusEl.innerHTML = "⏳ Memproses transaksi...";
 
-    // 4. Kirim request dengan tipe URL-encoded untuk menghindari delay CORS preflight
+    // 4. Kirim sebagai String JSON (Sesuai parser JSON di Google Apps Script)
     fetch(SCRIPT_URL, {
       method: 'POST',
       redirect: 'follow',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'text/plain;charset=utf-8'
       },
-      body: new URLSearchParams(payload)
+      body: JSON.stringify(payload)
     })
     .then(res => res.json())
     .then(res => {
@@ -385,10 +385,11 @@
         statusEl.style.color = "#15803d";
         statusEl.innerHTML = "✅ " + (res.message || "Transaksi berhasil diterima!");
         
+        // Reset Input
         nominalInput.value = "";
         keteranganInput.value = "";
 
-        // Sinkronisasi ulang dengan data server asli untuk memastikan konsistensi
+        // Verifikasi & sinkronkan saldo akhir dari server
         loadSaldo();
 
         setTimeout(() => {
@@ -398,7 +399,7 @@
         }, 2000);
 
       } else {
-        // Rollback saldo jika server menolak
+        // Rollback jika ditolak server
         localSaldoData = previousSaldoData;
         renderTable(localSaldoData);
 
@@ -409,7 +410,7 @@
       }
     })
     .catch(err => {
-      // Rollback saldo jika koneksi error
+      // Rollback jika koneksi gagal
       localSaldoData = previousSaldoData;
       renderTable(localSaldoData);
 
@@ -421,9 +422,8 @@
     });
   }
 
-  // Load saldo awal
+  // Load saldo pertama kali
   loadSaldo();
 </script>
-
 </body>
 </html>
