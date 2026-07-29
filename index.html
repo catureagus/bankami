@@ -123,11 +123,24 @@
       font-weight: 800;
       cursor: pointer;
       box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
+      transition: all 0.3s ease;
     }
 
     button:active {
       background: #d35400;
       transform: scale(0.98);
+    }
+
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* Style khusus saat berhasil dikirim */
+    button.btn-success {
+      background: #16a34a !important;
+      box-shadow: 0 4px 10px rgba(22, 163, 74, 0.3) !important;
     }
 
     #status {
@@ -136,6 +149,8 @@
       font-weight: 800;
       font-size: 17px;
       color: #15803d;
+      min-height: 24px;
+      transition: opacity 0.3s ease;
     }
 
     .saldo-header {
@@ -178,6 +193,7 @@
       font-size: 17px;
       padding: 12px 10px;
       border-bottom: 2px solid #cbd5e1;
+      text-align: center; /* Ditengahkan */
     }
 
     td {
@@ -186,6 +202,7 @@
       color: #0f172a;
       border-bottom: 1px solid #e2e8f0;
       word-wrap: break-word;
+      text-align: center; /* Ditengahkan */
     }
 
     tr:last-child td {
@@ -196,8 +213,8 @@
       background-color: #f8fafc;
     }
 
-    .right {
-      text-align: right;
+    .center-text {
+      text-align: center;
       font-weight: 800;
       color: #1e293b;
     }
@@ -232,7 +249,7 @@
   <label class="section-title">Uraian</label>
   <textarea id="keterangan" rows="3" placeholder="Masukkan keterangan..."></textarea>
 
-  <button onclick="kirim()">KIRIM</button>
+  <button id="btnKirim" onclick="kirim()">KIRIM</button>
 
   <div id="status"></div>
 
@@ -243,12 +260,12 @@
     <table>
       <thead>
         <tr>
-          <th style="text-align: left; width: 55%;">Nama</th>
-          <th style="text-align: right; width: 45%;">Saldo</th>
+          <th style="width: 50%;">Nama</th>
+          <th style="width: 50%;">Saldo</th>
         </tr>
       </thead>
       <tbody id="saldo">
-        <tr><td colspan="2" style="text-align:center;">Memuat saldo...</td></tr>
+        <tr><td colspan="2">Memuat saldo...</td></tr>
       </tbody>
     </table>
   </div>
@@ -256,7 +273,6 @@
 </div>
 
 <script>
-  // GANTI VALUE DI BAWAH DENGAN WEB APP URL DARI GOOGLE APPS SCRIPT ANDA
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1ZI7cwjU9aJIkMral63401WwjxQ4o-8MOjKZoB8Gh1C_u21Ti2LNS0WDU3t2TYJ8Qtg/exec";
 
   function formatNominal(el) {
@@ -268,9 +284,7 @@
     el.value = Number(angka).toLocaleString("id-ID");
   }
 
-  // 1. FUNGSI LOAD SALDO (DIPERBARUI)
   function loadSaldo() {
-    // Menambahkan mode: 'cors' dan redirect: 'follow' agar browser mau mengikuti redirect dari Google
     fetch(SCRIPT_URL, {
       method: "GET",
       redirect: "follow"
@@ -287,23 +301,24 @@
           data.forEach(function(r) {
             html += "<tr>" +
               "<td>" + r.nama + "</td>" +
-              "<td class='right'>" + Number(r.saldo).toLocaleString("id-ID") + "</td>" +
+              "<td class='center-text'>" + Number(r.saldo).toLocaleString("id-ID") + "</td>" +
               "</tr>";
           });
         } else {
-          html = "<tr><td colspan='2' style='text-align:center;'>Tidak ada data</td></tr>";
+          html = "<tr><td colspan='2'>Tidak ada data</td></tr>";
         }
         document.getElementById("saldo").innerHTML = html;
       })
       .catch(err => {
         console.error("Error loading saldo:", err);
-        document.getElementById("saldo").innerHTML = "<tr><td colspan='2' style='text-align:center; color:red;'>Gagal memuat saldo</td></tr>";
+        document.getElementById("saldo").innerHTML = "<tr><td colspan='2' style='color:red;'>Gagal memuat saldo</td></tr>";
       });
   }
 
-  // 2. FUNGSI KIRIM (DIPERBARUI MENGGUNAKAN text/plain AGAR MENGHINDARI CORS PREFLIGHT)
   function kirim() {
     let nominal = document.getElementById("nominal").value;
+    let btn = document.getElementById("btnKirim");
+    let statusEl = document.getElementById("status");
 
     if (nominal === "") {
       alert("Nominal harus diisi");
@@ -317,11 +332,12 @@
       keterangan: document.getElementById("keterangan").value
     };
 
-    let statusEl = document.getElementById("status");
+    // Ubah status & disable tombol saat proses berlangsung
+    btn.disabled = true;
+    btn.innerText = "MENGIRIM...";
     statusEl.style.color = "#15803d";
-    statusEl.innerHTML = "Mengirim...";
+    statusEl.innerHTML = "⏳ Memproses transaksi...";
 
-    // Menggunakan text/plain agar browser tidak mengirim request OPTIONS (Preflight) yang sering diblokir Google
     fetch(SCRIPT_URL, {
       method: 'POST',
       mode: 'cors',
@@ -334,17 +350,38 @@
     .then(response => response.json())
     .then(res => {
       if (res.status === true || res.status === "success") {
-        statusEl.innerHTML = "✅ " + (res.message || "Berhasil disimpan");
+        // Visual Indikator Berhasil pada Tombol
+        btn.classList.add("btn-success");
+        btn.innerText = "✔ BERHASIL DISIMPAN";
+        
+        statusEl.style.color = "#15803d";
+        statusEl.innerHTML = "✅ " + (res.message || "Transaksi berhasil diterima!");
+        
+        // Reset Input
         document.getElementById("nominal").value = "";
         document.getElementById("keterangan").value = "";
+        
+        // Perbarui data tabel saldo
         loadSaldo();
+
+        // Kembalikan status tombol setelah 5 detik
+        setTimeout(() => {
+          btn.classList.remove("btn-success");
+          btn.innerText = "KIRIM";
+          btn.disabled = false;
+        }, 5000);
+
       } else {
+        btn.innerText = "KIRIM";
+        btn.disabled = false;
         statusEl.style.color = "#b91c1c";
         statusEl.innerHTML = "❌ Gagal: " + res.message;
       }
     })
     .catch(err => {
       console.error(err);
+      btn.innerText = "KIRIM";
+      btn.disabled = false;
       statusEl.style.color = "#b91c1c";
       statusEl.innerHTML = "❌ Terjadi kesalahan jaringan";
     });
