@@ -146,9 +146,10 @@
       margin-top: 16px;
       text-align: center;
       font-weight: 800;
-      font-size: 17px;
+      font-size: 16px;
       color: #15803d;
       min-height: 24px;
+      line-height: 1.4;
       transition: opacity 0.3s ease;
     }
 
@@ -383,13 +384,11 @@
         return res.json();
       })
       .then(data => {
-        // Jika response berupa objek berisi { saldo: [...], transaksi: [...] }
         if (data.saldo) {
           localSaldoData = data.saldo;
           renderTable(data.saldo);
           if (data.transaksi) renderTransaksiTable(data.transaksi);
         } else {
-          // Jika response array saldo langsung
           localSaldoData = data;
           renderTable(data);
         }
@@ -401,7 +400,6 @@
   }
 
   function loadTransaksi() {
-    // Fungsi opsional untuk memuat endpoint transaksi khusus jika dipisah di Apps Script
     fetch(SCRIPT_URL + "?action=getTransaksi", { redirect: "follow" })
       .then(res => res.json())
       .then(data => {
@@ -410,23 +408,6 @@
         }
       })
       .catch(err => console.log("Memuat transaksi gabungan dari loadSaldo()"));
-  }
-
-  function updateOptimisticSaldo(kode, jenis, nominalVal) {
-    const numericNominal = parseInt(nominalVal.replace(/\./g, ''), 10) || 0;
-    
-    // Update saldo secara instan di memori lokal
-    localSaldoData = localSaldoData.map(item => {
-      if (item.nama === kode) {
-        let currentSaldo = Number(item.saldo);
-        let newSaldo = jenis === "Masuk" ? currentSaldo + numericNominal : currentSaldo - numericNominal;
-        return { ...item, saldo: newSaldo };
-      }
-      return item;
-    });
-
-    // Render ulang tabel tanpa menunggu respon server
-    renderTable(localSaldoData);
   }
 
   function kirim() {
@@ -446,19 +427,12 @@
       keterangan: keteranganInput.value
     };
 
-    // 1. Backup saldo sebelumnya untuk rollback jika server error
-    const previousSaldoData = JSON.parse(JSON.stringify(localSaldoData));
-
-    // 2. Tampilkan update saldo di layar secara instan (Optimistic Update)
-    updateOptimisticSaldo(kode, jenis, rawNominal);
-
-    // 3. Ubah status tombol & indikator
+    // Ubah status tombol & indikator pengiriman
     btnKirim.disabled = true;
     btnKirim.innerText = "MENGIRIM...";
-    statusEl.style.color = "#15803d";
-    statusEl.innerHTML = "⏳ Memproses transaksi...";
+    statusEl.style.color = "#d97706";
+    statusEl.innerHTML = "⏳ Mengirim permintaan persetujuan...";
 
-    // 4. Kirim sebagai String JSON (Sesuai parser JSON di Google Apps Script)
     fetch(SCRIPT_URL, {
       method: 'POST',
       redirect: 'follow',
@@ -469,43 +443,32 @@
     })
     .then(res => res.json())
     .then(res => {
-      if (res.status === true || res.status === "success") {
+      if (res.status === true) {
         btnKirim.classList.add("btn-success");
-        btnKirim.innerText = "✔ BERHASIL DISIMPAN";
+        btnKirim.innerText = "✔ TERKIRIM";
         
-        statusEl.style.color = "#15803d";
-        statusEl.innerHTML = "✅ " + (res.message || "Transaksi berhasil diterima!");
+        // Tampilkan pesan peringatan persetujuan dari backend
+        statusEl.style.color = "#d97706";
+        statusEl.innerHTML = "📩 " + (res.message || "Transaksi dikirim ke Pemilik Bank AMi untuk mendapat persetujuan.");
         
-        // Reset Input
+        // Reset Form Input
         nominalInput.value = "";
         keteranganInput.value = "";
-
-        // Verifikasi & sinkronkan saldo serta riwayat transaksi dari server
-        loadSaldo();
-        loadTransaksi();
 
         setTimeout(() => {
           btnKirim.classList.remove("btn-success");
           btnKirim.innerText = "KIRIM";
           btnKirim.disabled = false;
-        }, 2000);
+        }, 3000);
 
       } else {
-        // Rollback jika ditolak server
-        localSaldoData = previousSaldoData;
-        renderTable(localSaldoData);
-
         btnKirim.innerText = "KIRIM";
         btnKirim.disabled = false;
         statusEl.style.color = "#b91c1c";
-        statusEl.innerHTML = "❌ Gagal: " + res.message;
+        statusEl.innerHTML = "❌ Gagal: " + (res.message || "Gagal memproses transaksi");
       }
     })
     .catch(err => {
-      // Rollback jika koneksi gagal
-      localSaldoData = previousSaldoData;
-      renderTable(localSaldoData);
-
       console.error(err);
       btnKirim.innerText = "KIRIM";
       btnKirim.disabled = false;
@@ -514,7 +477,7 @@
     });
   }
 
-  // Load saldo dan daftar transaksi pertama kali
+  // Load awal data saldo dan riwayat transaksi
   loadSaldo();
   loadTransaksi();
 </script>
