@@ -6,7 +6,6 @@
   <title>Input Transaksi</title>
 
   <style>
-    /* Reset & Layout Rules */
     *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
@@ -219,7 +218,6 @@
       color: #1e293b;
     }
 
-    /* Penyesuaian khusus Tabel Transaksi */
     .transaksi-header {
       margin-top: 28px;
       border-top: 2px dashed #cbd5e1;
@@ -318,15 +316,12 @@
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-HVk_VqafCyl-ArUfOVvPTJVRH6YGBSLbVgzPuUNtygIafFOHW1FtLCX_3FRFMXoiug/exec";
    
-  // Cache referensi elemen DOM
   const nominalInput = document.getElementById("nominal");
   const keteranganInput = document.getElementById("keterangan");
   const btnKirim = document.getElementById("btnKirim");
   const statusEl = document.getElementById("status");
   const saldoBody = document.getElementById("saldo");
   const transaksiBody = document.getElementById("list-transaksi");
-
-  let localSaldoData = [];
 
   function formatNominal(el) {
     let raw = el.value.replace(/\D/g, '');
@@ -379,17 +374,12 @@
 
   function loadSaldo() {
     fetch(SCRIPT_URL, { redirect: "follow" })
-      .then(res => {
-        if (!res.ok) throw new Error("Gagal mengambil data");
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
         if (data.saldo) {
-          localSaldoData = data.saldo;
           renderTable(data.saldo);
           if (data.transaksi) renderTransaksiTable(data.transaksi);
         } else {
-          localSaldoData = data;
           renderTable(data);
         }
       })
@@ -403,11 +393,9 @@
     fetch(SCRIPT_URL + "?action=getTransaksi", { redirect: "follow" })
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) {
-          renderTransaksiTable(data);
-        }
+        if (Array.isArray(data)) renderTransaksiTable(data);
       })
-      .catch(err => console.log("Memuat transaksi gabungan dari loadSaldo()"));
+      .catch(err => console.log("Memuat riwayat..."));
   }
 
   function kirim() {
@@ -427,7 +415,6 @@
       keterangan: keteranganInput.value
     };
 
-    // Ubah status tombol & indikator pengiriman
     btnKirim.disabled = true;
     btnKirim.innerText = "MENGIRIM...";
     statusEl.style.color = "#d97706";
@@ -447,11 +434,9 @@
         btnKirim.classList.add("btn-success");
         btnKirim.innerText = "✔ TERKIRIM";
         
-        // Tampilkan pesan peringatan persetujuan dari backend
         statusEl.style.color = "#d97706";
         statusEl.innerHTML = "📩 " + (res.message || "Transaksi dikirim ke Pemilik Bank AMi untuk mendapat persetujuan.");
         
-        // Reset Form Input
         nominalInput.value = "";
         keteranganInput.value = "";
 
@@ -477,7 +462,6 @@
     });
   }
 
-  // Load awal data saldo dan riwayat transaksi
   loadSaldo();
   loadTransaksi();
 </script>
