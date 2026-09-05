@@ -11,6 +11,7 @@
     --primary-dark: #1565C0;
     --success-color: #2E7D32;
     --success-dark: #1B5E20;
+    --warning-color: #D32F2F;
     --bg-color: #F4F6F8;
     --card-bg: #FFFFFF;
     --text-main: #212121;
@@ -151,6 +152,11 @@ button.btn-success:active {
     background-color: var(--success-dark);
 }
 
+button.btn-refresh {
+    background-color: var(--primary-color);
+    margin-top: 10px;
+}
+
 button:active {
     background-color: var(--primary-dark);
     transform: scale(0.98);
@@ -159,6 +165,31 @@ button:active {
 button:disabled {
     background-color: #B0BEC5;
     box-shadow: none;
+}
+
+/* Kotak Sisa Hutang */
+.sisa-hutang-card {
+    background: #FFEBEE;
+    border: 2px solid var(--warning-color);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.sisa-hutang-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #B71C1C;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sisa-hutang-amount {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--warning-color);
 }
 
 .result-header {
@@ -316,6 +347,15 @@ button:disabled {
 
         <button type="submit" id="btnSimpan" class="btn-success">Simpan Data</button>
     </form>
+
+    <!-- TOMBOL REFRESH -->
+    <button type="button" id="btnRefresh" class="btn-refresh" onclick="tampilkanSemuaData()">Tekan tombol untuk melihat hasil</button>
+</div>
+
+<!-- KOTAK SISA HUTANG -->
+<div class="sisa-hutang-card">
+    <div class="sisa-hutang-title">Sisa Hutang</div>
+    <div class="sisa-hutang-amount" id="txtSisaHutang">Rp 23.812.000</div>
 </div>
 
 <div class="result-header">
@@ -327,8 +367,8 @@ button:disabled {
 </div>
 
 <script>
-// File Ciciilan Tata Iyung di drive catur data pegawai data kekayaan cicilan
 const url = "https://script.google.com/macros/s/AKfycbzDGX9kcibKN7VQ7UgMTv-_ACZEQ7yzVdovCSBTPX1vNr8m0QuKR2QwWfCFz77mTzI/exec"; 
+const TOTAL_HUTANG_AWAL = 23812000;
 
 // Otomatis muat seluruh data ketika halaman selesai di-load
 document.addEventListener("DOMContentLoaded", () => {
@@ -485,7 +525,6 @@ async function simpanData(event) {
 }
 
 // MENAMPILKAN SELURUH DATA CICILAN
-// Urutan label disesuaikan dengan struktur kolom dari backend/spreadsheet
 const columnLabels = [
     "Tanggal",       // Index 0 (Header Kiri)
     "Penyetor",      // Index 1 (Header Kanan / Badge)
@@ -499,6 +538,10 @@ const columnLabels = [
 function tampilkanSemuaData() {
     let container = document.getElementById("hasilContainer");
     let countLabel = document.getElementById("resultCount");
+    let btnRefresh = document.getElementById("btnRefresh");
+
+    btnRefresh.innerText = "Memuat...";
+    btnRefresh.disabled = true;
 
     container.innerHTML = `<div class="status-msg">Sedang mengambil data...</div>`;
     countLabel.innerText = "Memuat Data...";
@@ -510,24 +553,35 @@ function tampilkanSemuaData() {
 
         if (data.error) {
             container.innerHTML = `<div class="status-msg error">Error Backend: ${data.error}</div>`;
+            updateSisaHutang(0);
             return;
         }
 
         if (!data || data.length === 0) {
             container.innerHTML = `<div class="status-msg">Belum ada data Cicilan</div>`;
             countLabel.innerText = "Data: 0";
+            updateSisaHutang(0);
             return;
         }
 
         countLabel.innerText = `Menampilkan ${data.length} Data Cicilan`;
 
+        let totalTerbayar = 0;
+
         data.forEach(row => {
             let card = document.createElement("div");
             card.className = "item-card";
 
-            // Format tanggal header utama dengan dd MMM yyyy
             let tgl = formatTanggalDDMMMYY(row[0]);
             let penyetor = row[1] || "-";
+
+            // Hitung akumulasi total pembayaran (Index 3 adalah Total)
+            if (row[3] !== undefined && row[3] !== null) {
+                let digitsOnly = String(row[3]).replace(/\D/g, "");
+                if (digitsOnly !== "") {
+                    totalTerbayar += parseInt(digitsOnly, 10);
+                }
+            }
 
             let htmlContent = `
                 <div class="item-header">
@@ -547,21 +601,18 @@ function tampilkanSemuaData() {
                 if (rawVal !== undefined && rawVal !== null && String(rawVal).trim() !== "") {
                     displayVal = String(rawVal).trim();
 
-                    // Format tanggal Cicil
                     if (labelName === "Tanggal Cicil") {
                         displayVal = formatTanggalDDMMMYY(displayVal);
                     }
 
-                    // Format nominal angka (Total) dengan titik per 3 nol (ribuan)
                     if (labelName === "Total") {
                         let digitsOnly = displayVal.replace(/\D/g, ""); 
                         if (digitsOnly !== "") {
                             let num = parseInt(digitsOnly, 10);
-                            displayVal = num.toLocaleString("id-ID");
+                            displayVal = "Rp " + num.toLocaleString("id-ID");
                         }
                     }
 
-                    // Format link aktif
                     if (displayVal.startsWith("http://") || displayVal.startsWith("https://")) {
                         displayVal = `<a href="${displayVal}" target="_blank" rel="noopener noreferrer">Lihat Lampiran ↗</a>`;
                     }
@@ -582,11 +633,27 @@ function tampilkanSemuaData() {
             card.innerHTML = htmlContent;
             container.appendChild(card);
         });
+
+        // Update perhitungan sisa hutang setelah akumulasi selesai
+        updateSisaHutang(totalTerbayar);
     })
     .catch(err => {
         console.error(err);
         container.innerHTML = `<div class="status-msg error">Gagal memuat data dari server</div>`;
+        updateSisaHutang(0);
+    })
+    .finally(() => {
+        btnRefresh.innerText = "Tekan tombol untuk melihat hasil";
+        btnRefresh.disabled = false;
     });
+}
+
+// Fungsi menghitung dan menampilkan Sisa Hutang
+function updateSisaHutang(totalTerbayar) {
+    let sisa = TOTAL_HUTANG_AWAL - totalTerbayar;
+    if (sisa < 0) sisa = 0;
+    
+    document.getElementById("txtSisaHutang").innerText = "Rp " + sisa.toLocaleString("id-ID");
 }
 </script>
 
