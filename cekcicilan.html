@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Input & Data Cicilan</title>
+
+<style>
+:root {
+    --primary-color: #1976D2;
+    --primary-dark: #1565C0;
+    --success-color: #2E7D32;
+    --success-dark: #1B5E20;
+    --bg-color: #F4F6F8;
+    --card-bg: #FFFFFF;
+    --text-main: #212121;
+    --text-muted: #666666;
+    --border-color: #E0E0E0;
+    --accent-blue: #E3F2FD;
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 12px;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    line-height: 1.4;
+}
+
+.card {
+    background: var(--card-bg);
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+}
+
+h2 {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+h3 {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    border-bottom: 2px solid var(--accent-blue);
+    padding-bottom: 6px;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="file"],
+textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: #FAFAFA;
+    outline: none;
+    transition: border-color 0.2s, background-color 0.2s;
+    font-family: inherit;
+}
+
+input:focus, textarea:focus {
+    border-color: var(--primary-color);
+    background-color: #FFFFFF;
+}
+
+/* Radio Choice Style */
+.radio-group {
+    display: flex;
+    gap: 8px;
+}
+
+.radio-option {
+    flex: 1;
+    position: relative;
+}
+
+.radio-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.radio-option label {
+    display: block;
+    text-align: center;
+    padding: 10px;
+    background: #FAFAFA;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.radio-option input[type="radio"]:checked + label {
+    background-color: var(--accent-blue);
+    border-color: var(--primary-color);
+    color: var(--primary-dark);
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 4px;
+    box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3);
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+button.btn-success {
+    background-color: var(--success-color);
+    box-shadow: 0 2px 4px rgba(46, 125, 50, 0.3);
+}
+
+button.btn-success:active {
+    background-color: var(--success-dark);
+}
+
+button:active {
+    background-color: var(--primary-dark);
+    transform: scale(0.98);
+}
+
+button:disabled {
+    background-color: #B0BEC5;
+    box-shadow: none;
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 0 4px;
+}
+
+.result-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.data-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.item-card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+    border-left: 5px solid var(--primary-color);
+}
+
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.item-date {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.item-badge {
+    background: var(--accent-blue);
+    color: var(--primary-dark);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+.item-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+}
+
+.item-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-field.full-width {
+    grid-column: span 2;
+}
+
+.field-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.field-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-main);
+    word-break: break-word;
+}
+
+.field-value a {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+.status-msg {
+    text-align: center;
+    padding: 20px 15px;
+    background: white;
+    border-radius: 10px;
+    color: var(--text-muted);
+    font-size: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.status-msg.error {
+    color: #D32F2F;
+    background: #FFEBEE;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+    <h2>Input Data Cicilan</h2>
+
+    <!-- FORM INPUT DATA -->
+    <form id="formInput" onsubmit="simpanData(event)">
+        <h3>Input Data Cicilan Baru</h3>
+        
+        <div class="form-group">
+            <label for="inTanggalCicil">Tanggal Cicil *</label>
+            <input id="inTanggalCicil" type="date" required>
+        </div>
+
+        <div class="form-group">
+            <label for="inPenyetor">Penyetor *</label>
+            <input id="inPenyetor" type="text" placeholder="Nama Penyetor" required>
+        </div>
+
+        <div class="form-group">
+            <label for="inTotal">Total (Rp) *</label>
+            <input id="inTotal" type="text" class="rupiah-input" placeholder="0" required>
+        </div>
+
+        <div class="form-group">
+            <label>Metode Pembayaran</label>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" id="payCash" name="metode" value="Cash">
+                    <label for="payCash">Cash</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="payTransfer" name="metode" value="Transfer" checked>
+                    <label for="payTransfer">Transfer</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="inKeterangan">Keterangan</label>
+            <textarea id="inKeterangan" rows="2" placeholder="Catatan tambahan..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="inBukti">Bukti Transfer (Gambar)</label>
+            <input id="inBukti" type="file" accept="image/*">
+        </div>
+
+        <button type="submit" id="btnSimpan" class="btn-success">Simpan Data</button>
+    </form>
+</div>
+
+<div class="result-header">
+    <span class="result-count" id="resultCount">Daftar Data Cicilan</span>
+</div>
+
+<div id="hasilContainer" class="data-list">
+    <div class="status-msg">Sedang memuat data...</div>
+</div>
+
+<script>
+// File Ciciilan Tata Iyung di drive catur data pegawai data kekayaan cicilan
+const url = "https://script.google.com/macros/s/AKfycbzDGX9kcibKN7VQ7UgMTv-_ACZEQ7yzVdovCSBTPX1vNr8m0QuKR2QwWfCFz77mTzI/exec"; 
+
+// Otomatis muat seluruh data ketika halaman selesai di-load
+document.addEventListener("DOMContentLoaded", () => {
+    tampilkanSemuaData();
+});
+
+// Format tanggal ke format dd MMM yyyy (contoh: 05 Sep 2026)
+function formatTanggalDDMMMYY(dateString) {
+    if (!dateString || dateString === "-") return "-";
+
+    let str = String(dateString).trim();
+    const bulanIndo = [
+        "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+        "Jul", "Agust", "Sep", "Okt", "Nov", "Des"
+    ];
+
+    let match = str.match(
+        /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[,\s]+(\d{1,2})[.:](\d{2})[.:](\d{2}))?/
+    );
+
+    if (match) {
+        let day = parseInt(match[1], 10);
+        let month = parseInt(match[2], 10) - 1;
+        let year = parseInt(match[3], 10);
+
+        let testDate = new Date(year, month, day);
+
+        if (
+            testDate.getFullYear() === year &&
+            testDate.getMonth() === month &&
+            testDate.getDate() === day
+        ) {
+            return `${String(day).padStart(2, "0")} ${bulanIndo[month]} ${year}`;
+        }
+    }
+
+    let date = new Date(str);
+
+    if (!isNaN(date.getTime())) {
+        let day = String(date.getDate()).padStart(2, "0");
+        let month = bulanIndo[date.getMonth()];
+        let year = date.getFullYear();
+
+        return `${day} ${month} ${year}`;
+    }
+
+    return str;
+}
+
+// Format otomatis nominal rupiah di input form
+document.querySelectorAll('.rupiah-input').forEach(input => {
+    input.addEventListener('input', function(e) {
+        let value = this.value.replace(/\D/g, '');
+
+        if (value !== '') {
+            this.value = Number(value).toLocaleString('id-ID');
+        } else {
+            this.value = '';
+        }
+    });
+});
+
+// Helper untuk membersihkan format titik rupiah ke Integer
+function parseRupiah(id) {
+    let val = document.getElementById(id).value.replace(/\D/g, '');
+
+    if (val === "") {
+        return 0;
+    }
+
+    return Number(val);
+}
+
+// Konversi File Gambar ke Base64
+function convertFileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        if (!file) {
+            resolve("");
+            return;
+        }
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
+// Bukti Transfer Wajib Jika Transfer
+const payCash = document.getElementById("payCash");
+const payTransfer = document.getElementById("payTransfer");
+const inBukti = document.getElementById("inBukti");
+
+function updateBuktiRequirement() {
+    inBukti.required = payTransfer.checked;
+}
+
+payCash.addEventListener("change", updateBuktiRequirement);
+payTransfer.addEventListener("change", updateBuktiRequirement);
+
+updateBuktiRequirement();
+
+// SIMPAN DATA CICILAN
+async function simpanData(event) {
+    event.preventDefault();
+
+    let total = parseRupiah("inTotal");
+    let btn = document.getElementById("btnSimpan");
+    btn.innerText = "Menyimpan...";
+    btn.disabled = true;
+
+    try {
+        let fileInput = document.getElementById("inBukti").files[0];
+        let fileBase64 = await convertFileToBase64(fileInput);
+
+        let payload = {
+            tanggalCicil: document.getElementById("inTanggalCicil").value,
+            penyetor: document.getElementById("inPenyetor").value,
+            total: total,
+            metode: document.querySelector('input[name="metode"]:checked').value,
+            keterangan: document.getElementById("inKeterangan").value,
+            bukti: fileBase64,
+            fileName: fileInput ? fileInput.name : "",
+            fileType: fileInput ? fileInput.type : ""
+        };
+
+        let response = await fetch(url, {
+            method: "POST",
+            mode: "cors",
+            redirect: "follow",
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        let resData = await response.json();
+
+        if (resData.result === "pending_approval" || resData.status === "success") {
+            alert("Data berhasil dikirim! Menunggu persetujuan dari Bank AMi.");
+            document.getElementById("formInput").reset();
+            document.getElementById("payTransfer").checked = true;
+            updateBuktiRequirement();
+            tampilkanSemuaData(); // Muat ulang daftar setelah menyimpan
+        } else {
+            alert("Gagal mengirim data: " + (resData.message || "Terjadi kesalahan backend"));
+        }
+    } catch (err) {
+        console.error("Error Detail:", err);
+        alert("Terjadi kesalahan sistem saat mengirim data.");
+    } finally {
+        btn.innerText = "Simpan Data";
+        btn.disabled = false;
+    }
+}
+
+// MENAMPILKAN SELURUH DATA CICILAN
+// Urutan label disesuaikan dengan struktur kolom dari backend/spreadsheet
+const columnLabels = [
+    "Tanggal",       // Index 0 (Header Kiri)
+    "Penyetor",      // Index 1 (Header Kanan / Badge)
+    "Tanggal Cicil", // Index 2
+    "Total",         // Index 3
+    "Cash?",         // Index 4
+    "Keterangan",    // Index 5
+    "Bukti trf"      // Index 6
+];
+
+function tampilkanSemuaData() {
+    let container = document.getElementById("hasilContainer");
+    let countLabel = document.getElementById("resultCount");
+
+    container.innerHTML = `<div class="status-msg">Sedang mengambil data...</div>`;
+    countLabel.innerText = "Memuat Data...";
+
+    fetch(url)
+    .then(r => r.json())
+    .then(data => {
+        container.innerHTML = "";
+
+        if (data.error) {
+            container.innerHTML = `<div class="status-msg error">Error Backend: ${data.error}</div>`;
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            container.innerHTML = `<div class="status-msg">Belum ada data Cicilan</div>`;
+            countLabel.innerText = "Data: 0";
+            return;
+        }
+
+        countLabel.innerText = `Menampilkan ${data.length} Data Cicilan`;
+
+        data.forEach(row => {
+            let card = document.createElement("div");
+            card.className = "item-card";
+
+            // Format tanggal header utama dengan dd MMM yyyy
+            let tgl = formatTanggalDDMMMYY(row[0]);
+            let penyetor = row[1] || "-";
+
+            let htmlContent = `
+                <div class="item-header">
+                    <span class="item-date">📅 ${tgl}</span>
+                    <span class="item-badge">${penyetor}</span>
+                </div>
+                <div class="item-grid">
+            `;
+
+            let maxColumns = Math.min(row.length, columnLabels.length);
+
+            for (let i = 2; i < maxColumns; i++) {
+                let labelName = columnLabels[i];
+                let rawVal = row[i];
+                let displayVal = "-";
+
+                if (rawVal !== undefined && rawVal !== null && String(rawVal).trim() !== "") {
+                    displayVal = String(rawVal).trim();
+
+                    // Format tanggal Cicil
+                    if (labelName === "Tanggal Cicil") {
+                        displayVal = formatTanggalDDMMMYY(displayVal);
+                    }
+
+                    // Format nominal angka (Total) dengan titik per 3 nol (ribuan)
+                    if (labelName === "Total") {
+                        let digitsOnly = displayVal.replace(/\D/g, ""); 
+                        if (digitsOnly !== "") {
+                            let num = parseInt(digitsOnly, 10);
+                            displayVal = num.toLocaleString("id-ID");
+                        }
+                    }
+
+                    // Format link aktif
+                    if (displayVal.startsWith("http://") || displayVal.startsWith("https://")) {
+                        displayVal = `<a href="${displayVal}" target="_blank" rel="noopener noreferrer">Lihat Lampiran ↗</a>`;
+                    }
+                }
+
+                let isFull = String(displayVal).length > 25 || displayVal.includes("<a ");
+                let fieldClass = isFull ? "item-field full-width" : "item-field";
+
+                htmlContent += `
+                    <div class="${fieldClass}">
+                        <span class="field-label">${labelName}</span>
+                        <span class="field-value">${displayVal}</span>
+                    </div>
+                `;
+            }
+
+            htmlContent += `</div>`;
+            card.innerHTML = htmlContent;
+            container.appendChild(card);
+        });
+    })
+    .catch(err => {
+        console.error(err);
+        container.innerHTML = `<div class="status-msg error">Gagal memuat data dari server</div>`;
+    });
+}
+</script>
+
+</body>
+</html>
