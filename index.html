@@ -348,8 +348,8 @@ button:disabled {
         <button type="submit" id="btnSimpan" class="btn-success">Simpan Data</button>
     </form>
 
-    <!-- TOMBOL REFRESH -->
-    <button type="button" id="btnRefresh" class="btn-refresh" onclick="tampilkanSemuaData()">Tekan tombol untuk melihat hasil</button>
+    <!-- TOMBOL REFRESH DATA -->
+    <button type="button" id="btnRefresh" class="btn-refresh" onclick="tampilkanSemuaData(true)">Perbarui Data Terbaru</button>
 </div>
 
 <!-- KOTAK SISA HUTANG -->
@@ -370,12 +370,11 @@ button:disabled {
 const url = "https://script.google.com/macros/s/AKfycbzDGX9kcibKN7VQ7UgMTv-_ACZEQ7yzVdovCSBTPX1vNr8m0QuKR2QwWfCFz77mTzI/exec"; 
 const TOTAL_HUTANG_AWAL = 23812000;
 
-// Otomatis muat seluruh data ketika halaman selesai di-load
 document.addEventListener("DOMContentLoaded", () => {
-    tampilkanSemuaData();
+    tampilkanSemuaData(false);
 });
 
-// Format tanggal ke format dd MMM yyyy (contoh: 05 Sep 2026)
+// Format tanggal ke format dd MMM yyyy
 function formatTanggalDDMMMYY(dateString) {
     if (!dateString || dateString === "-") return "-";
 
@@ -434,16 +433,11 @@ document.querySelectorAll('.rupiah-input').forEach(input => {
 // Helper untuk membersihkan format titik rupiah ke Integer
 function parseRupiah(id) {
     let val = document.getElementById(id).value.replace(/\D/g, '');
-
-    if (val === "") {
-        return 0;
-    }
-
-    return Number(val);
+    return val === "" ? 0 : Number(val);
 }
 
-// Konversi File Gambar ke Base64
-function convertFileToBase64(file) {
+// Optimization: Kompresi Gambar sebelum dikonversi ke Base64 (Max 800px, Kualitas 70%)
+function compressAndConvertToBase64(file, maxWidth = 800, quality = 0.7) {
     return new Promise((resolve, reject) => {
         if (!file) {
             resolve("");
@@ -451,7 +445,30 @@ function convertFileToBase64(file) {
         }
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Mengembalikan Base64 terkompresi
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = error => reject(error);
+        };
         reader.onerror = error => reject(error);
     });
 }
@@ -467,7 +484,6 @@ function updateBuktiRequirement() {
 
 payCash.addEventListener("change", updateBuktiRequirement);
 payTransfer.addEventListener("change", updateBuktiRequirement);
-
 updateBuktiRequirement();
 
 // SIMPAN DATA CICILAN
@@ -476,12 +492,14 @@ async function simpanData(event) {
 
     let total = parseRupiah("inTotal");
     let btn = document.getElementById("btnSimpan");
-    btn.innerText = "Menyimpan...";
+    btn.innerText = "Mengompresi & Menyimpan...";
     btn.disabled = true;
 
     try {
         let fileInput = document.getElementById("inBukti").files[0];
-        let fileBase64 = await convertFileToBase64(fileInput);
+        let fileBase64 = await compressAndConvertToBase64(fileInput);
+
+        btn.innerText = "Menyimpan ke Server...";
 
         let payload = {
             tanggalCicil: document.getElementById("inTanggalCicil").value,
@@ -490,8 +508,8 @@ async function simpanData(event) {
             metode: document.querySelector('input[name="metode"]:checked').value,
             keterangan: document.getElementById("inKeterangan").value,
             bukti: fileBase64,
-            fileName: fileInput ? fileInput.name : "",
-            fileType: fileInput ? fileInput.type : ""
+            fileName: fileInput ? fileInput.name.replace(/\.[^/.]+$/, "") + ".jpg" : "",
+            fileType: fileInput ? "image/jpeg" : ""
         };
 
         let response = await fetch(url, {
@@ -511,7 +529,7 @@ async function simpanData(event) {
             document.getElementById("formInput").reset();
             document.getElementById("payTransfer").checked = true;
             updateBuktiRequirement();
-            tampilkanSemuaData(); // Muat ulang daftar setelah menyimpan
+            tampilkanSemuaData(true); // Memaksa ambil data baru dari server
         } else {
             alert("Gagal mengirim data: " + (resData.message || "Terjadi kesalahan backend"));
         }
@@ -535,22 +553,27 @@ const columnLabels = [
     "Bukti trf"      // Index 6
 ];
 
-function tampilkanSemuaData() {
+function tampilkanSemuaData(forceRefresh = false) {
     let container = document.getElementById("hasilContainer");
     let countLabel = document.getElementById("resultCount");
     let btnRefresh = document.getElementById("btnRefresh");
 
+    // Gunakan cache lokal jika ada dan tidak dipaksa refresh
+    const cachedData = localStorage.getItem("cacheDataCicilan");
+    if (cachedData && !forceRefresh) {
+        renderUI(JSON.parse(cachedData));
+        return;
+    }
+
     btnRefresh.innerText = "Memuat...";
     btnRefresh.disabled = true;
 
-    container.innerHTML = `<div class="status-msg">Sedang mengambil data...</div>`;
+    container.innerHTML = `<div class="status-msg">Sedang mengambil data dari server...</div>`;
     countLabel.innerText = "Memuat Data...";
 
     fetch(url)
     .then(r => r.json())
     .then(data => {
-        container.innerHTML = "";
-
         if (data.error) {
             container.innerHTML = `<div class="status-msg error">Error Backend: ${data.error}</div>`;
             updateSisaHutang(0);
@@ -561,81 +584,13 @@ function tampilkanSemuaData() {
             container.innerHTML = `<div class="status-msg">Belum ada data Cicilan</div>`;
             countLabel.innerText = "Data: 0";
             updateSisaHutang(0);
+            localStorage.removeItem("cacheDataCicilan");
             return;
         }
 
-        countLabel.innerText = `Menampilkan ${data.length} Data Cicilan`;
-
-        let totalTerbayar = 0;
-
-        data.forEach(row => {
-            let card = document.createElement("div");
-            card.className = "item-card";
-
-            let tgl = formatTanggalDDMMMYY(row[0]);
-            let penyetor = row[1] || "-";
-
-            // Hitung akumulasi total pembayaran (Index 3 adalah Total)
-            if (row[3] !== undefined && row[3] !== null) {
-                let digitsOnly = String(row[3]).replace(/\D/g, "");
-                if (digitsOnly !== "") {
-                    totalTerbayar += parseInt(digitsOnly, 10);
-                }
-            }
-
-            let htmlContent = `
-                <div class="item-header">
-                    <span class="item-date">📅 ${tgl}</span>
-                    <span class="item-badge">${penyetor}</span>
-                </div>
-                <div class="item-grid">
-            `;
-
-            let maxColumns = Math.min(row.length, columnLabels.length);
-
-            for (let i = 2; i < maxColumns; i++) {
-                let labelName = columnLabels[i];
-                let rawVal = row[i];
-                let displayVal = "-";
-
-                if (rawVal !== undefined && rawVal !== null && String(rawVal).trim() !== "") {
-                    displayVal = String(rawVal).trim();
-
-                    if (labelName === "Tanggal Cicil") {
-                        displayVal = formatTanggalDDMMMYY(displayVal);
-                    }
-
-                    if (labelName === "Total") {
-                        let digitsOnly = displayVal.replace(/\D/g, ""); 
-                        if (digitsOnly !== "") {
-                            let num = parseInt(digitsOnly, 10);
-                            displayVal = "Rp " + num.toLocaleString("id-ID");
-                        }
-                    }
-
-                    if (displayVal.startsWith("http://") || displayVal.startsWith("https://")) {
-                        displayVal = `<a href="${displayVal}" target="_blank" rel="noopener noreferrer">Lihat Lampiran ↗</a>`;
-                    }
-                }
-
-                let isFull = String(displayVal).length > 25 || displayVal.includes("<a ");
-                let fieldClass = isFull ? "item-field full-width" : "item-field";
-
-                htmlContent += `
-                    <div class="${fieldClass}">
-                        <span class="field-label">${labelName}</span>
-                        <span class="field-value">${displayVal}</span>
-                    </div>
-                `;
-            }
-
-            htmlContent += `</div>`;
-            card.innerHTML = htmlContent;
-            container.appendChild(card);
-        });
-
-        // Update perhitungan sisa hutang setelah akumulasi selesai
-        updateSisaHutang(totalTerbayar);
+        // Simpan respons ke localStorage
+        localStorage.setItem("cacheDataCicilan", JSON.stringify(data));
+        renderUI(data);
     })
     .catch(err => {
         console.error(err);
@@ -643,9 +598,87 @@ function tampilkanSemuaData() {
         updateSisaHutang(0);
     })
     .finally(() => {
-        btnRefresh.innerText = "Tekan tombol untuk melihat hasil";
+        btnRefresh.innerText = "Perbarui Data Terbaru";
         btnRefresh.disabled = false;
     });
+}
+
+// Rendering elemen UI dari data array
+function renderUI(data) {
+    let container = document.getElementById("hasilContainer");
+    let countLabel = document.getElementById("resultCount");
+
+    container.innerHTML = "";
+    countLabel.innerText = `Menampilkan ${data.length} Data Cicilan`;
+
+    let totalTerbayar = 0;
+
+    data.forEach(row => {
+        let card = document.createElement("div");
+        card.className = "item-card";
+
+        let tgl = formatTanggalDDMMMYY(row[0]);
+        let penyetor = row[1] || "-";
+
+        if (row[3] !== undefined && row[3] !== null) {
+            let digitsOnly = String(row[3]).replace(/\D/g, "");
+            if (digitsOnly !== "") {
+                totalTerbayar += parseInt(digitsOnly, 10);
+            }
+        }
+
+        let htmlContent = `
+            <div class="item-header">
+                <span class="item-date">📅 ${tgl}</span>
+                <span class="item-badge">${penyetor}</span>
+            </div>
+            <div class="item-grid">
+        `;
+
+        let maxColumns = Math.min(row.length, columnLabels.length);
+
+        for (let i = 2; i < maxColumns; i++) {
+            let labelName = columnLabels[i];
+            let rawVal = row[i];
+            let displayVal = "-";
+
+            if (rawVal !== undefined && rawVal !== null && String(rawVal).trim() !== "") {
+                displayVal = String(rawVal).trim();
+
+                if (labelName === "Tanggal Cicil") {
+                    displayVal = formatTanggalDDMMMYY(displayVal);
+                }
+
+                if (labelName === "Total") {
+                    let digitsOnly = displayVal.replace(/\D/g, ""); 
+                    if (digitsOnly !== "") {
+                        let num = parseInt(digitsOnly, 10);
+                        displayVal = "Rp " + num.toLocaleString("id-ID");
+                    }
+                }
+
+                if (displayVal.startsWith("http://") || displayVal.startsWith("https://")) {
+                    displayVal = `<a href="${displayVal}" target="_blank" rel="noopener noreferrer">Lihat Lampiran ↗</a>`;
+                }
+            }
+
+            let isFull = String(displayVal).length > 25 || displayVal.includes("<a ");
+            let fieldClass = isFull ? "item-field full-width" : "item-field";
+
+            htmlContent += `
+                <div class="${fieldClass}">
+                    <span class="field-label">${labelName}</span>
+                    <span class="field-value">${displayVal}</span>
+                </div>
+            `;
+        }
+
+        htmlContent += `</div>`;
+        card.innerHTML = htmlContent;
+        container.appendChild(card);
+    });
+
+    updateSisaHutang(totalTerbayar);
 }
 
 // Fungsi menghitung dan menampilkan Sisa Hutang
