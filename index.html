@@ -367,7 +367,18 @@ button:disabled {
 </div>
 
 <script>
-const url = "https://script.google.com/macros/s/AKfycbzDGX9kcibKN7VQ7UgMTv-_ACZEQ7yzVdovCSBTPX1vNr8m0QuKR2QwWfCFz77mTzI/exec"; 
+// 1. URL Apps Script HANYA untuk SIMPAN/POST DATA
+const urlAppsScript = "https://script.google.com/macros/s/AKfycbzDGX9kcibKN7VQ7UgMTv-_ACZEQ7yzVdovCSBTPX1vNr8m0QuKR2QwWfCFz77mTzI/exec"; 
+
+// 2. CONFIG BACA DATA LANGSUNG DARI GOOGLE SHEET (READ-ONLY)
+const SPREADSHEET_ID = "1cqGjLNH9U5gyLCsFXlXd8wuWlvervG2wjkssNlVQjYw"; // Ganti dengan ID Spreadsheet Anda
+const SHEET_NAME = "DataCicilan"; // Ganti dengan Nama Sheet/Tab Anda jika berbeda
+// File Cicilan Tata Iyung Yulis di Drive catureagus bank ami
+
+
+// Endpoint GViz Google Sheet
+const urlReadSheet = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
 const TOTAL_HUTANG_AWAL = 23812000;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -464,7 +475,6 @@ function compressAndConvertToBase64(file, maxWidth = 800, quality = 0.7) {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
 
-                // Mengembalikan Base64 terkompresi
                 resolve(canvas.toDataURL('image/jpeg', quality));
             };
             img.onerror = error => reject(error);
@@ -486,7 +496,7 @@ payCash.addEventListener("change", updateBuktiRequirement);
 payTransfer.addEventListener("change", updateBuktiRequirement);
 updateBuktiRequirement();
 
-// SIMPAN DATA CICILAN
+// SIMPAN DATA CICILAN (Tetap Mengirim ke Apps Script)
 async function simpanData(event) {
     event.preventDefault();
 
@@ -512,7 +522,7 @@ async function simpanData(event) {
             fileType: fileInput ? "image/jpeg" : ""
         };
 
-        let response = await fetch(url, {
+        let response = await fetch(urlAppsScript, {
             method: "POST",
             mode: "cors",
             redirect: "follow",
@@ -529,7 +539,7 @@ async function simpanData(event) {
             document.getElementById("formInput").reset();
             document.getElementById("payTransfer").checked = true;
             updateBuktiRequirement();
-            tampilkanSemuaData(true); // Memaksa ambil data baru dari server
+            tampilkanSemuaData(true);
         } else {
             alert("Gagal mengirim data: " + (resData.message || "Terjadi kesalahan backend"));
         }
@@ -542,15 +552,15 @@ async function simpanData(event) {
     }
 }
 
-// MENAMPILKAN SELURUH DATA CICILAN
+// MENAMPILKAN SELURUH DATA LANGSUNG DARI GOOGLE SHEET (GViz API)
 const columnLabels = [
-    "Tanggal",       // Index 0 (Header Kiri)
-    "Penyetor",      // Index 1 (Header Kanan / Badge)
-    "Tanggal Cicil", // Index 2
-    "Total",         // Index 3
-    "Cash?",         // Index 4
-    "Keterangan",    // Index 5
-    "Bukti trf"      // Index 6
+    "Tanggal",       
+    "Penyetor",      
+    "Tanggal Cicil", 
+    "Total",         
+    "Cash?",         
+    "Keterangan",    
+    "Bukti trf"      
 ];
 
 function tampilkanSemuaData(forceRefresh = false) {
@@ -558,7 +568,6 @@ function tampilkanSemuaData(forceRefresh = false) {
     let countLabel = document.getElementById("resultCount");
     let btnRefresh = document.getElementById("btnRefresh");
 
-    // Gunakan cache lokal jika ada dan tidak dipaksa refresh
     const cachedData = localStorage.getItem("cacheDataCicilan");
     if (cachedData && !forceRefresh) {
         renderUI(JSON.parse(cachedData));
@@ -568,19 +577,18 @@ function tampilkanSemuaData(forceRefresh = false) {
     btnRefresh.innerText = "Memuat...";
     btnRefresh.disabled = true;
 
-    container.innerHTML = `<div class="status-msg">Sedang mengambil data dari server...</div>`;
+    container.innerHTML = `<div class="status-msg">Sedang mengambil data dari Google Sheet...</div>`;
     countLabel.innerText = "Memuat Data...";
 
-    fetch(url)
-    .then(r => r.json())
-    .then(data => {
-        if (data.error) {
-            container.innerHTML = `<div class="status-msg error">Error Backend: ${data.error}</div>`;
-            updateSisaHutang(0);
-            return;
-        }
-
-        if (!data || data.length === 0) {
+    fetch(urlReadSheet)
+    .then(r => r.text())
+    .then(text => {
+        // Parsing respons JSONP Google Sheet GViz
+        const jsonString = text.substring(47, text.length - 2);
+        const json = JSON.parse(jsonString);
+        
+        const rows = json.table.rows;
+        if (!rows || rows.length === 0) {
             container.innerHTML = `<div class="status-msg">Belum ada data Cicilan</div>`;
             countLabel.innerText = "Data: 0";
             updateSisaHutang(0);
@@ -588,13 +596,17 @@ function tampilkanSemuaData(forceRefresh = false) {
             return;
         }
 
-        // Simpan respons ke localStorage
-        localStorage.setItem("cacheDataCicilan", JSON.stringify(data));
-        renderUI(data);
+        // Mengubah format array GViz menjadi Array 2D standar
+        const formattedData = rows.map(row => {
+            return row.c.map(cell => (cell && cell.v !== null) ? (cell.f || cell.v) : "");
+        });
+
+        localStorage.setItem("cacheDataCicilan", JSON.stringify(formattedData));
+        renderUI(formattedData);
     })
     .catch(err => {
-        console.error(err);
-        container.innerHTML = `<div class="status-msg error">Gagal memuat data dari server</div>`;
+        console.error("Error Fetching Sheet:", err);
+        container.innerHTML = `<div class="status-msg error">Gagal memuat data dari Google Sheet</div>`;
         updateSisaHutang(0);
     })
     .finally(() => {
@@ -603,7 +615,6 @@ function tampilkanSemuaData(forceRefresh = false) {
     });
 }
 
-// Rendering elemen UI dari data array
 function renderUI(data) {
     let container = document.getElementById("hasilContainer");
     let countLabel = document.getElementById("resultCount");
@@ -681,7 +692,6 @@ function renderUI(data) {
     updateSisaHutang(totalTerbayar);
 }
 
-// Fungsi menghitung dan menampilkan Sisa Hutang
 function updateSisaHutang(totalTerbayar) {
     let sisa = TOTAL_HUTANG_AWAL - totalTerbayar;
     if (sisa < 0) sisa = 0;
