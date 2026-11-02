@@ -19,18 +19,19 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 12px; /* Dikecilkan sedikit agar pas di layar HP */
+            padding: 12px;
             -webkit-tap-highlight-color: transparent;
         }
 
         .container {
-            max-width: 600px; /* Dipersempit agar optimal di layar vertikal smartphone */
+            max-width: 600px;
             margin: 0 auto;
         }
 
         h1 {
             font-size: 1.5rem;
             margin-bottom: 16px;
+            text-align: center;
         }
 
         h2 {
@@ -40,9 +41,31 @@
             margin-bottom: 12px;
         }
 
+        /* Flexbox untuk menyejajarkan Judul Tabel dan Info Total di sebelah kanan */
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-header-flex h2 {
+            margin: 0;
+        }
+
+        .total-badge {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            background-color: #eff6ff;
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid #bfdbfe;
+        }
+
         .card {
             background-color: var(--card-bg);
-            border-radius: 16px; /* Sudut lebih melengkung ala aplikasi mobile */
+            border-radius: 16px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             padding: 16px;
             margin-bottom: 16px;
@@ -58,7 +81,7 @@
         .saldo-table {
             width: 100%;
             border-collapse: collapse;
-            white-space: nowrap; /* Mencegah teks turun baris di tabel */
+            white-space: nowrap;
             text-align: center;
             font-size: 13px;
         }
@@ -87,11 +110,11 @@
 
         input, select {
             width: 100%;
-            padding: 12px; /* Padding lebih besar agar mudah diklik jari */
+            padding: 12px;
             border: 1px solid #cbd5e1;
             border-radius: 10px;
             box-sizing: border-box;
-            font-size: 16px; /* Ukuran 16px mencegah Zoom-in otomatis pada iOS/Android Chrome */
+            font-size: 16px;
             background-color: #fff;
         }
 
@@ -107,7 +130,7 @@
 
         button {
             width: 100%;
-            padding: 14px; /* Tombol dibuat lebih tinggi agar nyaman ditekan */
+            padding: 14px;
             border: none;
             border-radius: 10px;
             font-size: 16px;
@@ -153,7 +176,10 @@
 
     <!-- TABEL SALDO -->
     <div class="card">
-        <h2>Tabel Saldo</h2>
+        <div class="card-header-flex">
+            <h2>Tabel Saldo</h2>
+            <div class="total-badge" id="totalSaldoGlobal">Total: Rp 0</div>
+        </div>
         <div class="table-responsive">
             <table class="saldo-table" id="tabelSaldo">
                 <thead>
@@ -291,6 +317,9 @@
                     }
                 });
 
+                // Hitung total keseluruhan seluruh komponen saldo
+                let grandTotal = totalITB + totalIWB + totalIPD + totalSS + totalRihlah + totalKas + totalTaawun;
+
                 document.getElementById('saldo-ITB').innerText = formatRupiahText(totalITB);
                 document.getElementById('saldo-IWB').innerText = formatRupiahText(totalIWB);
                 document.getElementById('saldo-IPD').innerText = formatRupiahText(totalIPD);
@@ -298,6 +327,9 @@
                 document.getElementById('saldo-Rihlah').innerText = formatRupiahText(totalRihlah);
                 document.getElementById('saldo-Kas').innerText = formatRupiahText(totalKas);
                 document.getElementById('saldo-Taawun').innerText = formatRupiahText(totalTaawun);
+
+                // Tampilkan total keseluruhan di sebelah kanan judul Tabel Saldo
+                document.getElementById('totalSaldoGlobal').innerText = 'Total: ' + formatRupiahText(grandTotal);
             })
             .catch(err => {
                 console.error('Gagal memuat saldo:', err);
@@ -337,7 +369,6 @@
 
         if (selectedValue === 'Kas') {
             labelKeterangan.innerText = 'Jumlah Kas:';
-            // inputmode="numeric" memunculkan keyboard angka khusus di Android
             containerKeterangan.innerHTML = `<input type="tel" inputmode="numeric" id="jumlahKasInput" required placeholder="Masukkan Jumlah Kas" onkeyup="formatRibuan(this)">`;
         } else {
             labelKeterangan.innerText = 'Keterangan:';
@@ -467,7 +498,7 @@
                 dataValues.Taawun = 10000;
             }
         } else {
-            namaUraian = document.getElementById('namaUraianInput', true).value;
+            namaUraian = document.getElementById('namaUraianInput').value;
             keterangan = document.getElementById('keteranganInput').value || '-';
             jenisStatus = 'Keluar';
 
