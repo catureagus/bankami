@@ -41,12 +41,14 @@
             margin-bottom: 12px;
         }
 
-        /* Flexbox untuk menyejajarkan Judul Tabel dan Info Total di sebelah kanan */
+        /* Flexbox untuk menyejajarkan Judul Saldo dan Info Total di sebelah kanan */
         .card-header-flex {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .card-header-flex h2 {
@@ -54,7 +56,7 @@
         }
 
         .total-badge {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 600;
             color: var(--primary-color);
             background-color: #eff6ff;
@@ -71,24 +73,23 @@
             margin-bottom: 16px;
         }
 
-        /* Tabel Saldo dengan dukungan Scroll Horizontal untuk Android */
+        /* Tabel Saldo 2 Baris */
         .table-responsive {
             width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
         }
 
         .saldo-table {
             width: 100%;
             border-collapse: collapse;
-            white-space: nowrap;
+            table-layout: fixed;
             text-align: center;
-            font-size: 13px;
+            font-size: 12px; /* Ukuran font nyaman dibaca */
         }
 
         .saldo-table th, .saldo-table td {
             border: 1px solid #e2e8f0;
-            padding: 10px 12px;
+            padding: 8px 4px;
+            word-wrap: break-word;
         }
 
         .saldo-table th {
@@ -174,10 +175,10 @@
 <div class="container">
     <h1>Kas Usar 2026</h1>
 
-    <!-- TABEL SALDO -->
+    <!-- SALDO -->
     <div class="card">
         <div class="card-header-flex">
-            <h2>Tabel Saldo</h2>
+            <h2>Saldo</h2>
             <div class="total-badge" id="totalSaldoGlobal">Total: Rp 0</div>
         </div>
         <div class="table-responsive">
@@ -188,9 +189,6 @@
                         <th>IWB</th>
                         <th>IPD</th>
                         <th>SS</th>
-                        <th>Rihlah</th>
-                        <th>Kas</th>
-                        <th>Taawun</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -199,9 +197,18 @@
                         <td id="saldo-IWB">Rp 0</td>
                         <td id="saldo-IPD">Rp 0</td>
                         <td id="saldo-SS">Rp 0</td>
+                    </tr>
+                    <tr>
+                        <th>Rihlah</th>
+                        <th>Kas</th>
+                        <th>Taawun</th>
+                        <th>-</th>
+                    </tr>
+                    <tr>
                         <td id="saldo-Rihlah">Rp 0</td>
                         <td id="saldo-Kas">Rp 0</td>
                         <td id="saldo-Taawun">Rp 0</td>
+                        <td>-</td>
                     </tr>
                 </tbody>
             </table>
@@ -317,7 +324,6 @@
                     }
                 });
 
-                // Hitung total keseluruhan seluruh komponen saldo
                 let grandTotal = totalITB + totalIWB + totalIPD + totalSS + totalRihlah + totalKas + totalTaawun;
 
                 document.getElementById('saldo-ITB').innerText = formatRupiahText(totalITB);
@@ -328,7 +334,6 @@
                 document.getElementById('saldo-Kas').innerText = formatRupiahText(totalKas);
                 document.getElementById('saldo-Taawun').innerText = formatRupiahText(totalTaawun);
 
-                // Tampilkan total keseluruhan di sebelah kanan judul Tabel Saldo
                 document.getElementById('totalSaldoGlobal').innerText = 'Total: ' + formatRupiahText(grandTotal);
             })
             .catch(err => {
