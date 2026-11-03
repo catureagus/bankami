@@ -350,19 +350,19 @@
                     <label id="labelKeterangan" for="keteranganContainer">Keterangan:</label>
                     <div id="keteranganContainer">
                         <select id="keteranganSelect" required>
-                            <option value="">-- Pilih Bulan --</option>
-                            <option value="Januari">Januari</option>
-                            <option value="Februari">Februari</option>
-                            <option value="Maret">Maret</option>
-                            <option value="April">April</option>
-                            <option value="Mei">Mei</option>
-                            <option value="Juni">Juni</option>
-                            <option value="Juli">Juli</option>
-                            <option value="Agustus">Agustus</option>
-                            <option value="September">September</option>
-                            <option value="Oktober">Oktober</option>
-                            <option value="November">November</option>
-                            <option value="Desember">Desember</option>
+							<option value="">-- Pilih Bulan --</option>
+							<option value="Jan">Januari</option>
+							<option value="Feb">Februari</option>
+							<option value="Mar">Maret</option>
+							<option value="Apr">April</option>
+							<option value="Mei">Mei</option>
+							<option value="Jun">Juni</option>
+							<option value="Jul">Juli</option>
+							<option value="Agu">Agustus</option>
+							<option value="Sep">September</option>
+							<option value="Okt">Oktober</option>
+							<option value="Nov">November</option>
+							<option value="Des">Desember</option>
                         </select>
                     </div>
                 </div>
@@ -673,18 +673,18 @@
             containerKeterangan.innerHTML = `
                 <select id="keteranganSelect" required>
                     <option value="">-- Pilih Bulan --</option>
-                    <option value="Januari">Januari</option>
-                    <option value="Februari">Februari</option>
-                    <option value="Maret">Maret</option>
-                    <option value="April">April</option>
+                    <option value="Jan">Januari</option>
+                    <option value="Feb">Februari</option>
+                    <option value="Mar">Maret</option>
+                    <option value="Apr">April</option>
                     <option value="Mei">Mei</option>
-                    <option value="Juni">Juni</option>
-                    <option value="Juli">Juli</option>
-                    <option value="Agustus">Agustus</option>
-                    <option value="September">September</option>
-                    <option value="Oktober">Oktober</option>
-                    <option value="November">November</option>
-                    <option value="Desember">Desember</option>
+                    <option value="Jun">Juni</option>
+                    <option value="Jul">Juli</option>
+                    <option value="Agu">Agustus</option>
+                    <option value="Sep">September</option>
+                    <option value="Okt">Oktober</option>
+                    <option value="Nov">November</option>
+                    <option value="Des">Desember</option>
                 </select>
             `;
         }
@@ -732,19 +732,19 @@
             labelKeterangan.innerText = 'Keterangan:';
             containerKeterangan.innerHTML = `
                 <select id="keteranganSelect" required>
-                    <option value="">-- Pilih Bulan --</option>
-                    <option value="Januari">Januari</option>
-                    <option value="Februari">Februari</option>
-                    <option value="Maret">Maret</option>
-                    <option value="April">April</option>
+					<option value="">-- Pilih Bulan --</option>
+                    <option value="Jan">Januari</option>
+                    <option value="Feb">Februari</option>
+                    <option value="Mar">Maret</option>
+                    <option value="Apr">April</option>
                     <option value="Mei">Mei</option>
-                    <option value="Juni">Juni</option>
-                    <option value="Juli">Juli</option>
-                    <option value="Agustus">Agustus</option>
-                    <option value="September">September</option>
-                    <option value="Oktober">Oktober</option>
-                    <option value="November">November</option>
-                    <option value="Desember">Desember</option>
+                    <option value="Jun">Juni</option>
+                    <option value="Jul">Juli</option>
+                    <option value="Agu">Agustus</option>
+                    <option value="Sep">September</option>
+                    <option value="Okt">Oktober</option>
+                    <option value="Nov">November</option>
+                    <option value="Des">Desember</option>
                 </select>
             `;
         }
@@ -769,7 +769,7 @@
             keterangan: ''
         };
 
-        if (jenis === 'masuk') {
+		if (jenis === 'masuk') {
             namaUraian = document.getElementById('namaUraianSelect').value;
             jenisStatus = 'In'; 
             dataValues.status = jenisStatus;
@@ -787,13 +787,26 @@
             } else {
                 keterangan = document.getElementById('keteranganSelect').value;
                 dataValues.keterangan = keterangan;
-                dataValues.ITB = 50000;
-                dataValues.IWB = 0; 
-                dataValues.IPD = 25000;
-                dataValues.SS = 15000;
-                dataValues.Rihlah = 30000;
-                dataValues.Kas = 20000;
-                dataValues.Taawun = 10000;
+                
+                // Pengecekan khusus jika nama yang dipilih adalah Kokom
+                if (namaUraian === 'Kokom') {
+                    dataValues.ITB = 50000;
+                    dataValues.IWB = 80000; // IWB diset 80.000 khusus Kokom
+                    dataValues.IPD = 25000;
+                    dataValues.SS = 15000;
+                    dataValues.Rihlah = 30000;
+                    dataValues.Kas = 20000;
+                    dataValues.Taawun = 10000;
+                } else {
+                    // Nilai standar untuk anggota lainnya
+                    dataValues.ITB = 50000;
+                    dataValues.IWB = 0; 
+                    dataValues.IPD = 25000;
+                    dataValues.SS = 15000;
+                    dataValues.Rihlah = 30000;
+                    dataValues.Kas = 20000;
+                    dataValues.Taawun = 10000;
+                }
             }
         } else {
             namaUraian = document.getElementById('namaUraianInput').value;
