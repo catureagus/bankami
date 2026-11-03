@@ -28,10 +28,61 @@
             margin: 0 auto;
         }
 
+        /* Header Utama dengan Titik Tiga */
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
         h1 {
             font-size: 1.5rem;
-            margin-bottom: 16px;
+            margin: 0;
             text-align: center;
+            flex-grow: 1;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-color);
+            padding: 4px 8px;
+            box-shadow: none;
+            width: auto;
+        }
+
+        /* Dropdown Menu Titik Tiga */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 40px;
+            background-color: var(--card-bg);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 100;
+        }
+
+        .dropdown-menu button {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            padding: 10px 16px;
+            text-align: left;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        .dropdown-menu button:hover {
+            background-color: #f1f5f9;
         }
 
         h2 {
@@ -41,7 +92,7 @@
             margin-bottom: 12px;
         }
 
-        /* Flexbox untuk menyejajarkan Judul Saldo dan Info Total di sebelah kanan */
+        /* Flexbox untuk menyejajarkan Judul dan Info Total di sebelah kanan */
         .card-header-flex {
             display: flex;
             justify-content: space-between;
@@ -76,6 +127,7 @@
         /* Tabel Saldo 2 Baris */
         .table-responsive {
             width: 100%;
+            overflow-x: auto;
         }
 
         .saldo-table {
@@ -83,7 +135,7 @@
             border-collapse: collapse;
             table-layout: fixed;
             text-align: center;
-            font-size: 12px; /* Ukuran font nyaman dibaca */
+            font-size: 12px;
         }
 
         .saldo-table th, .saldo-table td {
@@ -95,6 +147,34 @@
         .saldo-table th {
             background-color: #f8fafc;
             font-weight: 600;
+        }
+
+        /* Tabel Rincian Data Sheets */
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+		.detail-table td {
+            border: 1px solid #e2e8f0;
+            padding: 8px 6px;
+            text-align: left; /* Isi data tetap rata kiri */
+        }
+
+        .detail-table th {
+            border: 1px solid #e2e8f0;
+            padding: 8px 6px;
+            background-color: #f8fafc;
+            font-weight: 600;
+            text-align: center; /* KHUSUS HEADER dibuat rata tengah */
+        }
+
+		/* Kolom pertama (Waktu) dibuat pas, kolom lain menyesuaikan */
+        .detail-table th:nth-child(1), .detail-table td:nth-child(1) {
+            width: 110px; 
+            white-space: nowrap;
         }
 
         /* Form Styling yang Touch-Friendly untuk Android */
@@ -123,6 +203,12 @@
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .search-input {
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            font-size: 14px;
         }
 
         .btn-group {
@@ -161,7 +247,7 @@
             display: none;
         }
 
-        #loading {
+        #loading, #loadingDetail {
             text-align: center;
             font-style: italic;
             color: #64748b;
@@ -173,118 +259,154 @@
 <body>
 
 <div class="container">
-    <h1>Kas Usar 2026</h1>
-
-    <!-- SALDO -->
-    <div class="card">
-        <div class="card-header-flex">
-            <h2>Saldo</h2>
-            <div class="total-badge" id="totalSaldoGlobal">Total: Rp 0</div>
-        </div>
-        <div class="table-responsive">
-            <table class="saldo-table" id="tabelSaldo">
-                <thead>
-                    <tr>
-                        <th>ITB</th>
-                        <th>IWB</th>
-                        <th>IPD</th>
-                        <th>SS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td id="saldo-ITB">Rp 0</td>
-                        <td id="saldo-IWB">Rp 0</td>
-                        <td id="saldo-IPD">Rp 0</td>
-                        <td id="saldo-SS">Rp 0</td>
-                    </tr>
-                    <tr>
-                        <th>Rihlah</th>
-                        <th>Kas</th>
-                        <th>Taawun</th>
-                        <th>-</th>
-                    </tr>
-                    <tr>
-                        <td id="saldo-Rihlah">Rp 0</td>
-                        <td id="saldo-Kas">Rp 0</td>
-                        <td id="saldo-Taawun">Rp 0</td>
-                        <td>-</td>
-                    </tr>
-                </tbody>
-            </table>
+    <!-- HEADER UTAMA -->
+    <div class="main-header">
+        <div style="width: 32px;"></div>
+        <h1>Kas Usar 2026</h1>
+        <div style="position: relative;">
+            <button class="menu-btn" onclick="toggleMenu()">⋮</button>
+            <div id="dropdownMenu" class="dropdown-menu">
+                <button onclick="switchTab('home')">Transaksi</button>
+                <button onclick="switchTab('detail')">Detail</button>
+            </div>
         </div>
     </div>
 
-    <!-- FORM INPUT TRANSAKSI -->
-    <div class="card">
-        <h2>Input Transaksi</h2>
-        
-        <div class="form-group">
-            <label for="jenisTransaksi">Pilih Jenis Transaksi:</label>
-            <select id="jenisTransaksi" onchange="toggleForm()">
-                <option value="masuk">Masuk</option>
-                <option value="keluar">Keluar</option>
-            </select>
+    <!-- TAB BERANDA -->
+    <div id="tabHome">
+        <!-- SALDO -->
+        <div class="card">
+            <div class="card-header-flex">
+                <h2>Saldo</h2>
+                <div class="total-badge" id="totalSaldoGlobal">Total: Rp 0</div>
+            </div>
+            <div class="table-responsive">
+                <table class="saldo-table" id="tabelSaldo">
+                    <thead>
+                        <tr>
+                            <th>ITB</th>
+                            <th>IWB</th>
+                            <th>IPD</th>
+                            <th>SS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td id="saldo-ITB">Rp 0</td>
+                            <td id="saldo-IWB">Rp 0</td>
+                            <td id="saldo-IPD">Rp 0</td>
+                            <td id="saldo-SS">Rp 0</td>
+                        </tr>
+                        <tr>
+                            <th>Rihlah</th>
+                            <th>Kas</th>
+                            <th>Taawun</th>
+                            <th>-</th>
+                        </tr>
+                        <tr>
+                            <td id="saldo-Rihlah">Rp 0</td>
+                            <td id="saldo-Kas">Rp 0</td>
+                            <td id="saldo-Taawun">Rp 0</td>
+                            <td>-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <form id="formKas" onsubmit="submitData(event)">
-            <!-- Kolom Nama -->
+        <!-- FORM INPUT TRANSAKSI -->
+        <div class="card">
+            <h2>Input Transaksi</h2>
+            
             <div class="form-group">
-                <label id="labelNamaUraian" for="namaUraianContainer">Nama:</label>
-                <div id="namaUraianContainer">
-                    <select id="namaUraianSelect" required onchange="handleNamaChange(this)">
-                        <option value="">-- Pilih Nama --</option>
-                        <option value="Dian L">Dian L</option>
-                        <option value="Kholifah">Kholifah</option>
-                        <option value="Kokom">Kokom</option>
-                        <option value="Roisah">Roisah</option>
-                        <option value="Teny">Teny</option>
-                        <option value="Tuti">Tuti</option>
-                        <option value="Umiyati">Umiyati</option>
-                        <option value="Kas">Kas</option>
-                    </select>
+                <label for="jenisTransaksi">Pilih Jenis Transaksi:</label>
+                <select id="jenisTransaksi" onchange="toggleForm()">
+                    <option value="masuk">In</option>
+                    <option value="keluar">Out</option>
+                </select>
+            </div>
+
+            <form id="formKas" onsubmit="submitData(event)">
+                <!-- Kolom Nama -->
+                <div class="form-group">
+                    <label id="labelNamaUraian" for="namaUraianContainer">Nama:</label>
+                    <div id="namaUraianContainer">
+                        <select id="namaUraianSelect" required onchange="handleNamaChange(this)">
+                            <option value="">-- Pilih Nama --</option>
+                            <option value="Dian L">Dian L</option>
+                            <option value="Kholifah">Kholifah</option>
+                            <option value="Kokom">Kokom</option>
+                            <option value="Roisah">Roisah</option>
+                            <option value="Teny">Teny</option>
+                            <option value="Tuti">Tuti</option>
+                            <option value="Umiyati">Umiyati</option>
+                            <option value="Kas">Kas</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Kolom Keterangan / Jumlah Kas -->
-            <div class="form-group">
-                <label id="labelKeterangan" for="keteranganContainer">Keterangan:</label>
-                <div id="keteranganContainer">
-                    <select id="keteranganSelect" required>
-                        <option value="">-- Pilih Bulan --</option>
-                        <option value="Januari">Januari</option>
-                        <option value="Februari">Februari</option>
-                        <option value="Maret">Maret</option>
-                        <option value="April">April</option>
-                        <option value="Mei">Mei</option>
-                        <option value="Juni">Juni</option>
-                        <option value="Juli">Juli</option>
-                        <option value="Agustus">Agustus</option>
-                        <option value="September">September</option>
-                        <option value="Oktober">Oktober</option>
-                        <option value="November">November</option>
-                        <option value="Desember">Desember</option>
-                    </select>
+                <!-- Kolom Keterangan / Jumlah Kas -->
+                <div class="form-group">
+                    <label id="labelKeterangan" for="keteranganContainer">Keterangan:</label>
+                    <div id="keteranganContainer">
+                        <select id="keteranganSelect" required>
+                            <option value="">-- Pilih Bulan --</option>
+                            <option value="Januari">Januari</option>
+                            <option value="Februari">Februari</option>
+                            <option value="Maret">Maret</option>
+                            <option value="April">April</option>
+                            <option value="Mei">Mei</option>
+                            <option value="Juni">Juni</option>
+                            <option value="Juli">Juli</option>
+                            <option value="Agustus">Agustus</option>
+                            <option value="September">September</option>
+                            <option value="Oktober">Oktober</option>
+                            <option value="November">November</option>
+                            <option value="Desember">Desember</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Field khusus Pengeluaran -->
-            <div id="sectionKeluar" class="hidden">
-                <h3>Nilai Pengeluaran</h3>
-                <div class="form-group"><label>ITB:</label><input type="tel" inputmode="numeric" id="keluar_ITB" value="0" onkeyup="formatRibuan(this)"></div>
-                <div class="form-group"><label>IWB:</label><input type="tel" inputmode="numeric" id="keluar_IWB" value="0" onkeyup="formatRibuan(this)"></div>
-                <div class="form-group"><label>IPD:</label><input type="tel" inputmode="numeric" id="keluar_IPD" value="0" onkeyup="formatRibuan(this)"></div>
-                <div class="form-group"><label>SS:</label><input type="tel" inputmode="numeric" id="keluar_SS" value="0" onkeyup="formatRibuan(this)"></div>
-                <div class="form-group"><label>Rihlah:</label><input type="tel" inputmode="numeric" id="keluar_Rihlah" value="0" onkeyup="formatRibuan(this)"></div>
-                <div class="form-group"><label>Kas:</label><input type="tel" inputmode="numeric" id="keluar_Kas" value="0" onkeyup="formatRibuan(this)"></div>
-                <div class="form-group"><label>Taawun:</label><input type="tel" inputmode="numeric" id="keluar_Taawun" value="0" onkeyup="formatRibuan(this)"></div>
-            </div>
+                <!-- Field khusus Pengeluaran -->
+                <div id="sectionKeluar" class="hidden">
+                    <h3>Nilai Pengeluaran</h3>
+                    <div class="form-group"><label>ITB:</label><input type="tel" inputmode="numeric" id="keluar_ITB" value="0" onkeyup="formatRibuan(this)"></div>
+                    <div class="form-group"><label>IWB:</label><input type="tel" inputmode="numeric" id="keluar_IWB" value="0" onkeyup="formatRibuan(this)"></div>
+                    <div class="form-group"><label>IPD:</label><input type="tel" inputmode="numeric" id="keluar_IPD" value="0" onkeyup="formatRibuan(this)"></div>
+                    <div class="form-group"><label>SS:</label><input type="tel" inputmode="numeric" id="keluar_SS" value="0" onkeyup="formatRibuan(this)"></div>
+                    <div class="form-group"><label>Rihlah:</label><input type="tel" inputmode="numeric" id="keluar_Rihlah" value="0" onkeyup="formatRibuan(this)"></div>
+                    <div class="form-group"><label>Kas:</label><input type="tel" inputmode="numeric" id="keluar_Kas" value="0" onkeyup="formatRibuan(this)"></div>
+                    <div class="form-group"><label>Taawun:</label><input type="tel" inputmode="numeric" id="keluar_Taawun" value="0" onkeyup="formatRibuan(this)"></div>
+                </div>
 
-            <div class="btn-group">
-                <button type="submit" id="btnSubmit" class="btn-masuk">Simpan Pemasukan</button>
+                <div class="btn-group">
+                    <button type="submit" id="btnSubmit" class="btn-masuk">Simpan Pemasukan</button>
+                </div>
+            </form>
+            <div id="loading" class="hidden">Menyimpan data ke Google Sheets...</div>
+        </div>
+    </div>
+
+    <!-- TAB RINCIAN DATA -->
+    <div id="tabDetail" class="hidden">
+        <div class="card">
+            <div class="card-header-flex">
+                <h2>Rincian Seluruh Transaksi</h2>
+                <div class="total-badge" id="totalDetailFilter">Total: Rp 0</div>
             </div>
-        </form>
-        <div id="loading" class="hidden">Menyimpan data ke Google Sheets...</div>
+            <!-- Kolom Pencarian / Filter -->
+            <input type="text" id="searchInput" class="search-input" placeholder="Cari data (gunakan spasi untuk logika AND)..." onkeyup="filterTable()">
+            
+            <div id="loadingDetail" class="hidden">Memuat data rincian...</div>
+            <div class="table-responsive">
+                <table class="detail-table" id="tabelDetailData">
+                    <thead>
+                        <tr id="detailHeaderRow"></tr>
+                    </thead>
+                    <tbody id="detailBodyRows"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -293,9 +415,45 @@
     const spreadsheetId = '1ZK6EDgxTp5tIoqhi2S4nHw_GxjVWT7dtOz-3sU1UpdM'; 
     const gvizURL = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?sheet=Kas`;
 
+    let allSheetRows = [];
+
     window.onload = function() {
         loadSaldo();
     };
+
+    function toggleMenu() {
+        const menu = document.getElementById('dropdownMenu');
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('.menu-btn')) {
+            const dropdowns = document.getElementsByClassName("dropdown-menu");
+            for (let i = 0; i < dropdowns.length; i++) {
+                let openDropdown = dropdowns[i];
+                if (openDropdown.style.display === 'block') {
+                    openDropdown.style.display = 'none';
+                }
+            }
+        }
+    }
+
+    function switchTab(tabName) {
+        const tabHome = document.getElementById('tabHome');
+        const tabDetail = document.getElementById('tabDetail');
+        
+        if (tabName === 'home') {
+            tabHome.classList.remove('hidden');
+            tabDetail.classList.add('hidden');
+            loadSaldo();
+        } else if (tabName === 'detail') {
+            tabHome.classList.add('hidden');
+            tabDetail.classList.remove('hidden');
+            loadDetailData();
+        }
+        document.getElementById('dropdownMenu').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     function loadSaldo() {
         fetch(gvizURL)
@@ -304,13 +462,7 @@
                 const jsonData = JSON.parse(rep.substring(47).slice(0, -2));
                 const rows = jsonData.table.rows;
 
-                let totalITB = 0;
-                let totalIWB = 0;
-                let totalIPD = 0;
-                let totalSS = 0;
-                let totalRihlah = 0;
-                let totalKas = 0;
-                let totalTaawun = 0;
+                let totalITB = 0, totalIWB = 0, totalIPD = 0, totalSS = 0, totalRihlah = 0, totalKas = 0, totalTaawun = 0;
 
                 rows.forEach(row => {
                     if (row.c) {
@@ -339,6 +491,147 @@
             .catch(err => {
                 console.error('Gagal memuat saldo:', err);
             });
+    }
+
+    function loadDetailData() {
+        document.getElementById('loadingDetail').classList.remove('hidden');
+        fetch(gvizURL)
+            .then(res => res.text())
+            .then(rep => {
+                const jsonData = JSON.parse(rep.substring(47).slice(0, -2));
+                const cols = jsonData.table.cols;
+                allSheetRows = jsonData.table.rows;
+
+                let headerHtml = '';
+                cols.forEach(col => {
+                    headerHtml += `<th>${col ? (col.label || col.id || '') : ''}</th>`;
+                });
+                document.getElementById('detailHeaderRow').innerHTML = headerHtml;
+
+                renderTableRows(allSheetRows);
+                document.getElementById('loadingDetail').classList.add('hidden');
+            })
+            .catch(err => {
+                console.error('Gagal memuat rincian data:', err);
+                document.getElementById('loadingDetail').innerText = 'Gagal memuat data rincian.';
+            });
+    }
+
+    function formatDateDDD(val) {
+        if (!val) return '';
+        
+        let d = null;
+
+        if (typeof val === 'string' && val.startsWith('Date(')) {
+            let parts = val.replace('Date(', '').replace(')', '').split(',');
+            d = new Date(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]), parseInt(parts[3] || 0), parseInt(parts[4] || 0), parseInt(parts[5] || 0));
+        } 
+        else if (typeof val === 'string' && val.includes('/')) {
+            let mainParts = val.split(',');
+            let dateParts = mainParts[0].trim().split('/');
+            if (dateParts.length === 3) {
+                let day = parseInt(dateParts[0]);
+                let month = parseInt(dateParts[1]) - 1; 
+                let year = parseInt(dateParts[2]);
+                
+                let timeParts = mainParts[1] ? mainParts[1].trim().split('.') : [0, 0, 0];
+                let hour = parseInt(timeParts[0] || 0);
+                let minute = parseInt(timeParts[1] || 0);
+                let second = parseInt(timeParts[2] || 0);
+
+                d = new Date(year, month, day, hour, minute, second);
+            }
+        }
+
+        if (!d || isNaN(d.getTime())) {
+            d = new Date(val);
+        }
+
+        if (!isNaN(d.getTime())) {
+            return formatToCustomID(d);
+        }
+
+        return val; 
+    }
+
+    function formatToCustomID(dateObj) {
+        const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+        
+        let dayName = days[dateObj.getDay()];                  
+        let dayNum = String(dateObj.getDate()).padStart(2, '0'); 
+        let monthName = months[dateObj.getMonth()];            
+        
+        return `${dayName}, ${dayNum} ${monthName}`;  
+    }
+
+    function calculateFilteredTotal(rows) {
+        let filterGrandTotal = 0;
+        rows.forEach(row => {
+            if (row.c) {
+                // Menjumlahkan seluruh nilai pada kolom indeks 3 sampai 9 (kolom nominal keuangan) baris yang terfilter
+                for (let i = 3; i <= 9; i++) {
+                    let cellVal = row.c[i] ? (row.c[i].v || 0) : 0;
+                    if (typeof cellVal === 'number') {
+                        filterGrandTotal += cellVal;
+                    }
+                }
+            }
+        });
+        document.getElementById('totalDetailFilter').innerText = 'Total: ' + formatRupiahText(filterGrandTotal);
+    }
+
+    function renderTableRows(rows) {
+        let bodyHtml = '';
+        if (rows.length === 0) {
+            bodyHtml = `<tr><td colspan="10" style="text-align: center;">Tidak ada data ditemukan.</td></tr>`;
+        } else {
+            rows.forEach(row => {
+                bodyHtml += '<tr>';
+                if (row.c) {
+                    row.c.forEach((cell, index) => {
+                        let val = (cell && cell.v !== null && cell.v !== undefined) ? cell.v : '';
+                        
+                        if (index === 0) {
+                            val = formatDateDDD(val);
+                        } 
+                        else if (index >= 3 && index <= 9 && typeof val === 'number') {
+                            val = val.toLocaleString('id-ID');
+                        }
+
+                        bodyHtml += `<td>${val}</td>`;
+                    });
+                }
+                bodyHtml += '</tr>';
+            });
+        }
+        document.getElementById('detailBodyRows').innerHTML = bodyHtml;
+        
+        // Perbarui badge total berdasarkan baris yang sedang ditampilkan
+        calculateFilteredTotal(rows);
+    }
+
+    function filterTable() {
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        if (!query) {
+            renderTableRows(allSheetRows);
+            return;
+        }
+
+        const searchKeywords = query.split(/\s+/);
+
+        const filteredRows = allSheetRows.filter(row => {
+            if (!row.c) return false;
+            
+            let rowText = row.c.map(cell => {
+                let val = (cell && cell.v !== null && cell.v !== undefined) ? String(cell.v) : '';
+                return val.toLowerCase();
+            }).join(' ');
+
+            return searchKeywords.every(keyword => rowText.includes(keyword));
+        });
+
+        renderTableRows(filteredRows);
     }
 
     function formatRupiahText(angka) {
@@ -478,7 +771,7 @@
 
         if (jenis === 'masuk') {
             namaUraian = document.getElementById('namaUraianSelect').value;
-            jenisStatus = 'Masuk';
+            jenisStatus = 'In'; 
             dataValues.status = jenisStatus;
             dataValues.namaUraian = namaUraian;
 
@@ -505,7 +798,7 @@
         } else {
             namaUraian = document.getElementById('namaUraianInput').value;
             keterangan = document.getElementById('keteranganInput').value || '-';
-            jenisStatus = 'Keluar';
+            jenisStatus = 'Out'; 
 
             dataValues.status = jenisStatus;
             dataValues.namaUraian = namaUraian;
@@ -532,6 +825,9 @@
             document.getElementById('formKas').reset();
             toggleForm();
             document.getElementById('loading').classList.add('hidden');
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
             setTimeout(loadSaldo, 2000);
         })
         .catch(error => {
