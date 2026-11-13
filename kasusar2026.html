@@ -773,18 +773,18 @@
                 Object.keys(rekapAnggota).forEach(nama => {
                     const data = rekapAnggota[nama];
                     teks += `${nomor}. ${nama}\n`;
-                    teks += `        - ITB = Rp. ${data.ITB.toLocaleString('id-ID')}\n`;
+                    teks += `        - ITB = Rp ${data.ITB.toLocaleString('id-ID')}\n`;
                     teks += `        - IWB = Rp ${data.IWB.toLocaleString('id-ID')}\n`;
-                    teks += `        - SS = Rp. ${data.SS.toLocaleString('id-ID')}\n`;
-                    teks += `        - IPD = Rp. ${data.IPD.toLocaleString('id-ID')}\n`;
+                    teks += `        - SS = Rp ${data.SS.toLocaleString('id-ID')}\n`;
+                    teks += `        - IPD = Rp ${data.IPD.toLocaleString('id-ID')}\n`;
                     nomor++;
                 });
 
                 teks += `\nJumlah:\n`;
-                teks += `        - ITB = Rp. ${totalAll.ITB.toLocaleString('id-ID')}\n`;
+                teks += `        - ITB = Rp ${totalAll.ITB.toLocaleString('id-ID')}\n`;
                 teks += `        - IWB = Rp ${totalAll.IWB.toLocaleString('id-ID')}\n`;
-                teks += `        - SS = Rp. ${totalAll.SS.toLocaleString('id-ID')}\n`;
-                teks += `        - IPD = Rp. ${totalAll.IPD.toLocaleString('id-ID')}`;
+                teks += `        - SS = Rp ${totalAll.SS.toLocaleString('id-ID')}\n`;
+                teks += `        - IPD = Rp ${totalAll.IPD.toLocaleString('id-ID')}`;
 
                 document.getElementById('teksLaporan').innerText = teks;
                 document.getElementById('loadingLaporan').classList.add('hidden');
