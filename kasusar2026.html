@@ -66,6 +66,7 @@
             border-radius: 8px;
             overflow: hidden;
             z-index: 100;
+            min-width: 140px;
         }
 
         .dropdown-menu button {
@@ -157,10 +158,10 @@
             margin-top: 10px;
         }
 
-		.detail-table td {
+        .detail-table td {
             border: 1px solid #e2e8f0;
             padding: 8px 6px;
-            text-align: left; /* Isi data tetap rata kiri */
+            text-align: left;
         }
 
         .detail-table th {
@@ -168,10 +169,9 @@
             padding: 8px 6px;
             background-color: #f8fafc;
             font-weight: 600;
-            text-align: center; /* KHUSUS HEADER dibuat rata tengah */
+            text-align: center;
         }
 
-		/* Kolom pertama (Waktu) dibuat pas, kolom lain menyesuaikan */
         .detail-table th:nth-child(1), .detail-table td:nth-child(1) {
             width: 110px; 
             white-space: nowrap;
@@ -180,6 +180,7 @@
         /* Form Styling yang Touch-Friendly untuk Android */
         .form-group {
             margin-bottom: 14px;
+            position: relative;
         }
 
         label {
@@ -189,7 +190,7 @@
             font-size: 14px;
         }
 
-        input, select {
+        input, select, textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid #cbd5e1;
@@ -199,7 +200,7 @@
             background-color: #fff;
         }
 
-        input:focus, select:focus {
+        input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
@@ -209,6 +210,34 @@
             margin-bottom: 12px;
             padding: 10px 12px;
             font-size: 14px;
+        }
+
+        /* Dropdown Saran untuk Uraian/Nama Out */
+        .suggestions-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-top: none;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 50;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f1f5f9;
         }
 
         .btn-group {
@@ -227,12 +256,39 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
+        .btn-primary {
+            background-color: var(--primary-color);
+        }
+
         .btn-masuk {
             background-color: var(--success-color);
         }
 
         .btn-keluar {
             background-color: var(--danger-color);
+        }
+
+        /* Area Hasil Laporan */
+        .report-box {
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 14px;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            margin-top: 16px;
+            color: #0f172a;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-row .form-group {
+            flex: 1;
         }
 
         #sectionKeluar h3 {
@@ -247,7 +303,7 @@
             display: none;
         }
 
-        #loading, #loadingDetail {
+        #loading, #loadingDetail, #loadingLaporan {
             text-align: center;
             font-style: italic;
             color: #64748b;
@@ -268,6 +324,7 @@
             <div id="dropdownMenu" class="dropdown-menu">
                 <button onclick="switchTab('home')">Transaksi</button>
                 <button onclick="switchTab('detail')">Detail</button>
+                <button onclick="switchTab('laporan')">Laporan</button>
             </div>
         </div>
     </div>
@@ -350,19 +407,19 @@
                     <label id="labelKeterangan" for="keteranganContainer">Keterangan:</label>
                     <div id="keteranganContainer">
                         <select id="keteranganSelect" required>
-							<option value="">-- Pilih Bulan --</option>
-							<option value="Jan">Januari</option>
-							<option value="Feb">Februari</option>
-							<option value="Mar">Maret</option>
-							<option value="Apr">April</option>
-							<option value="Mei">Mei</option>
-							<option value="Jun">Juni</option>
-							<option value="Jul">Juli</option>
-							<option value="Agu">Agustus</option>
-							<option value="Sep">September</option>
-							<option value="Okt">Oktober</option>
-							<option value="Nov">November</option>
-							<option value="Des">Desember</option>
+                            <option value="">-- Pilih Bulan --</option>
+                            <option value="Jan">Januari</option>
+                            <option value="Feb">Februari</option>
+                            <option value="Mar">Maret</option>
+                            <option value="Apr">April</option>
+                            <option value="Mei">Mei</option>
+                            <option value="Jun">Juni</option>
+                            <option value="Jul">Juli</option>
+                            <option value="Agu">Agustus</option>
+                            <option value="Sep">September</option>
+                            <option value="Okt">Oktober</option>
+                            <option value="Nov">November</option>
+                            <option value="Des">Desember</option>
                         </select>
                     </div>
                 </div>
@@ -408,6 +465,50 @@
             </div>
         </div>
     </div>
+
+    <!-- TAB LAPORAN BULANAN -->
+    <div id="tabLaporan" class="hidden">
+        <div class="card">
+            <h2>Laporan Iuran & Infaq</h2>
+            <div class="filter-row">
+                <div class="form-group">
+                    <label for="laporanBulan">Bulan:</label>
+                    <select id="laporanBulan">
+                        <option value="Jan">Januari</option>
+                        <option value="Feb">Februari</option>
+                        <option value="Mar">Maret</option>
+                        <option value="Apr">April</option>
+                        <option value="Mei">Mei</option>
+                        <option value="Jun">Juni</option>
+                        <option value="Jul">Juli</option>
+                        <option value="Agu">Agustus</option>
+                        <option value="Sep">September</option>
+                        <option value="Okt">Oktober</option>
+                        <option value="Nov">November</option>
+                        <option value="Des">Desember</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="laporanTahun">Tahun:</label>
+                    <select id="laporanTahun">
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                        <option value="2027">2027</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="button" class="btn-primary" onclick="generateLaporan()">Buat Laporan</button>
+            <div id="loadingLaporan" class="hidden">Mengambil data laporan...</div>
+
+            <div id="hasilLaporanContainer" class="hidden">
+                <div id="teksLaporan" class="report-box"></div>
+                <div class="btn-group">
+                    <button type="button" id="btnCopyLaporan" class="btn-masuk" onclick="copyLaporan()">Copy Laporan</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -416,10 +517,23 @@
     const gvizURL = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?sheet=Kas`;
 
     let allSheetRows = [];
+    let existingNamesList = ["Dian L", "Kholifah", "Kokom", "Roisah", "Teny", "Tuti", "Umiyati", "Kas"];
 
     window.onload = function() {
         loadSaldo();
+        setDefaultBulanLaporan();
     };
+
+    function setDefaultBulanLaporan() {
+        const bulanKode = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const now = new Date();
+        document.getElementById('laporanBulan').value = bulanKode[now.getMonth()];
+        const tahunSelect = document.getElementById('laporanTahun');
+        const currentYear = String(now.getFullYear());
+        if ([...tahunSelect.options].some(opt => opt.value === currentYear)) {
+            tahunSelect.value = currentYear;
+        }
+    }
 
     function toggleMenu() {
         const menu = document.getElementById('dropdownMenu');
@@ -436,20 +550,30 @@
                 }
             }
         }
+        // Sembunyikan saran dropdown nama jika klik di luar
+        if (!event.target.closest('#namaUraianContainer')) {
+            const sugg = document.getElementById('suggestionsList');
+            if (sugg) sugg.style.display = 'none';
+        }
     }
 
     function switchTab(tabName) {
         const tabHome = document.getElementById('tabHome');
         const tabDetail = document.getElementById('tabDetail');
+        const tabLaporan = document.getElementById('tabLaporan');
         
+        tabHome.classList.add('hidden');
+        tabDetail.classList.add('hidden');
+        tabLaporan.classList.add('hidden');
+
         if (tabName === 'home') {
             tabHome.classList.remove('hidden');
-            tabDetail.classList.add('hidden');
             loadSaldo();
         } else if (tabName === 'detail') {
-            tabHome.classList.add('hidden');
             tabDetail.classList.remove('hidden');
             loadDetailData();
+        } else if (tabName === 'laporan') {
+            tabLaporan.classList.remove('hidden');
         }
         document.getElementById('dropdownMenu').style.display = 'none';
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -517,9 +641,9 @@
             });
     }
 
-    function formatDateDDD(val) {
-        if (!val) return '';
-        
+    // Helper parsing tanggal untuk keperluan tampilan & ekstraksi tahun
+    function parseDateObj(val) {
+        if (!val) return null;
         let d = null;
 
         if (typeof val === 'string' && val.startsWith('Date(')) {
@@ -547,11 +671,15 @@
             d = new Date(val);
         }
 
-        if (!isNaN(d.getTime())) {
+        return !isNaN(d.getTime()) ? d : null;
+    }
+
+    function formatDateDDD(val) {
+        const d = parseDateObj(val);
+        if (d) {
             return formatToCustomID(d);
         }
-
-        return val; 
+        return val || ''; 
     }
 
     function formatToCustomID(dateObj) {
@@ -565,11 +693,137 @@
         return `${dayName}, ${dayNum} ${monthName}`;  
     }
 
+    // FITUR BUAT LAPORAN BULANAN
+    function generateLaporan() {
+        const bulanDipilih = document.getElementById('laporanBulan').value; // misal: "Jan", "Feb", "Agu"
+        const tahunDipilih = document.getElementById('laporanTahun').value; // misal: "2026"
+        const yy = tahunDipilih.slice(-2); // misal: "26"
+
+        document.getElementById('loadingLaporan').classList.remove('hidden');
+        document.getElementById('hasilLaporanContainer').classList.add('hidden');
+
+        fetch(gvizURL)
+            .then(res => res.text())
+            .then(rep => {
+                const jsonData = JSON.parse(rep.substring(47).slice(0, -2));
+                const rows = jsonData.table.rows;
+
+                // Daftar urutan anggota (selain "Kas")
+                const daftarAnggota = ["Dian L", "Kholifah", "Kokom", "Roisah", "Teny", "Tuti", "Umiyati"];
+                
+                // Inisialisasi objek penampung per anggota
+                let rekapAnggota = {};
+                daftarAnggota.forEach(nama => {
+                    rekapAnggota[nama] = { ITB: 0, IWB: 0, SS: 0, IPD: 0, adaTransaksi: false };
+                });
+
+                let totalAll = { ITB: 0, IWB: 0, SS: 0, IPD: 0 };
+
+                rows.forEach(row => {
+                    if (!row.c) return;
+
+                    let waktuVal = row.c[0] ? row.c[0].v : null;
+                    let nama = row.c[1] ? String(row.c[1].v || '').trim() : '';
+                    let status = row.c[2] ? String(row.c[2].v || '').trim() : '';
+                    
+                    let itb = row.c[3] ? (Number(row.c[3].v) || 0) : 0;
+                    let iwb = row.c[4] ? (Number(row.c[4].v) || 0) : 0;
+                    let ipd = row.c[5] ? (Number(row.c[5].v) || 0) : 0;
+                    let ss  = row.c[6] ? (Number(row.c[6].v) || 0) : 0;
+                    let keterangan = row.c[10] ? String(row.c[10].v || '').trim() : '';
+
+                    // Cek tahun dari kolom waktu
+                    let dateObj = parseDateObj(waktuVal);
+                    let rowYear = dateObj ? String(dateObj.getFullYear()) : '';
+
+                    // Cocokkan Status = In, Keterangan bulan sesuai, dan Tahun sesuai
+                    // Antisipasi variasi penulisan bulan Agustus ("Agu" atau "Agt")
+                    let bulanCocok = (keterangan.toLowerCase() === bulanDipilih.toLowerCase()) ||
+                                     (bulanDipilih === 'Agu' && keterangan.toLowerCase() === 'agt');
+
+                    if (status.toLowerCase() === 'in' && bulanCocok && rowYear === tahunDipilih) {
+                        if (rekapAnggota[nama]) {
+                            rekapAnggota[nama].ITB += itb;
+                            rekapAnggota[nama].IWB += iwb;
+                            rekapAnggota[nama].SS  += ss;
+                            rekapAnggota[nama].IPD += ipd;
+                            rekapAnggota[nama].adaTransaksi = true;
+                        } else if (nama !== 'Kas' && nama !== '') {
+                            // Jika ada nama anggota baru di luar daftar default
+                            rekapAnggota[nama] = { ITB: itb, IWB: iwb, SS: ss, IPD: ipd, adaTransaksi: true };
+                        }
+
+                        if (nama !== 'Kas') {
+                            totalAll.ITB += itb;
+                            totalAll.IWB += iwb;
+                            totalAll.SS  += ss;
+                            totalAll.IPD += ipd;
+                        }
+                    }
+                });
+
+                // Susun teks laporan sesuai format yang diminta
+                let teks = `LAPORAN IURAN & INFAQ\n`;
+                teks += `BULANAN UPA\n\n`;
+                teks += `Kode UPA: AD3P\n`;
+                teks += `Bendahara: Tuti\n`;
+                teks += `Bulan: ${bulanDipilih}  ${yy}\n`;
+
+                let nomor = 1;
+                Object.keys(rekapAnggota).forEach(nama => {
+                    const data = rekapAnggota[nama];
+                    teks += `${nomor}. ${nama}\n`;
+                    teks += `        - ITB = Rp. ${data.ITB.toLocaleString('id-ID')}\n`;
+                    teks += `        - IWB = Rp ${data.IWB.toLocaleString('id-ID')}\n`;
+                    teks += `        - SS = Rp. ${data.SS.toLocaleString('id-ID')}\n`;
+                    teks += `        - IPD = Rp. ${data.IPD.toLocaleString('id-ID')}\n`;
+                    nomor++;
+                });
+
+                teks += `\nJumlah:\n`;
+                teks += `        - ITB = Rp. ${totalAll.ITB.toLocaleString('id-ID')}\n`;
+                teks += `        - IWB = Rp ${totalAll.IWB.toLocaleString('id-ID')}\n`;
+                teks += `        - SS = Rp. ${totalAll.SS.toLocaleString('id-ID')}\n`;
+                teks += `        - IPD = Rp. ${totalAll.IPD.toLocaleString('id-ID')}`;
+
+                document.getElementById('teksLaporan').innerText = teks;
+                document.getElementById('loadingLaporan').classList.add('hidden');
+                document.getElementById('hasilLaporanContainer').classList.remove('hidden');
+
+                // Reset tombol copy
+                const btnCopy = document.getElementById('btnCopyLaporan');
+                btnCopy.innerText = 'Copy Laporan';
+            })
+            .catch(err => {
+                console.error('Gagal membuat laporan:', err);
+                document.getElementById('loadingLaporan').innerText = 'Gagal mengambil data dari Google Sheets.';
+            });
+    }
+
+    function copyLaporan() {
+        const teks = document.getElementById('teksLaporan').innerText;
+        navigator.clipboard.writeText(teks).then(() => {
+            const btnCopy = document.getElementById('btnCopyLaporan');
+            btnCopy.innerText = 'Tersalin! ✓';
+            setTimeout(() => {
+                btnCopy.innerText = 'Copy Laporan';
+            }, 2500);
+        }).catch(err => {
+            // Fallback untuk browser lama
+            const textArea = document.createElement("textarea");
+            textArea.value = teks;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textArea);
+            alert('Laporan berhasil disalin!');
+        });
+    }
+
     function calculateFilteredTotal(rows) {
         let filterGrandTotal = 0;
         rows.forEach(row => {
             if (row.c) {
-                // Menjumlahkan seluruh nilai pada kolom indeks 3 sampai 9 (kolom nominal keuangan) baris yang terfilter
                 for (let i = 3; i <= 9; i++) {
                     let cellVal = row.c[i] ? (row.c[i].v || 0) : 0;
                     if (typeof cellVal === 'number') {
@@ -606,8 +860,6 @@
             });
         }
         document.getElementById('detailBodyRows').innerHTML = bodyHtml;
-        
-        // Perbarui badge total berdasarkan baris yang sedang ditampilkan
         calculateFilteredTotal(rows);
     }
 
@@ -619,10 +871,8 @@
         }
 
         const searchKeywords = query.split(/\s+/);
-
         const filteredRows = allSheetRows.filter(row => {
             if (!row.c) return false;
-            
             let rowText = row.c.map(cell => {
                 let val = (cell && cell.v !== null && cell.v !== undefined) ? String(cell.v) : '';
                 return val.toLowerCase();
@@ -690,6 +940,34 @@
         }
     }
 
+    // Fungsi untuk menangani input teks sebagian dengan saran (Autocomplete) pada form Out
+    function handleOutInputKeyup(inputElem) {
+        const val = inputElem.value.toLowerCase().trim();
+        const suggList = document.getElementById('suggestionsList');
+        
+        if (!val) {
+            suggList.style.display = 'none';
+            return;
+        }
+
+        const filtered = existingNamesList.filter(name => name.toLowerCase().includes(val));
+        if (filtered.length > 0) {
+            let html = '';
+            filtered.forEach(item => {
+                html += `<div class="suggestion-item" onclick="selectSuggestion('${item}')">${item}</div>`;
+            });
+            suggList.innerHTML = html;
+            suggList.style.display = 'block';
+        } else {
+            suggList.style.display = 'none';
+        }
+    }
+
+    function selectSuggestion(val) {
+        document.getElementById('namaUraianInput').value = val;
+        document.getElementById('suggestionsList').style.display = 'none';
+    }
+
     function toggleForm() {
         const jenis = document.getElementById('jenisTransaksi').value;
         const sectionKeluar = document.getElementById('sectionKeluar');
@@ -705,7 +983,10 @@
             btnSubmit.innerText = 'Simpan Pengeluaran';
             
             labelNamaUraian.innerText = 'Nama / Uraian:';
-            containerNama.innerHTML = `<input type="text" id="namaUraianInput" required placeholder="Masukkan Nama atau Uraian">`;
+            containerNama.innerHTML = `
+                <input type="text" id="namaUraianInput" required placeholder="Masukkan Nama atau Uraian" autocomplete="off" onkeyup="handleOutInputKeyup(this)">
+                <div id="suggestionsList" class="suggestions-list"></div>
+            `;
             
             labelKeterangan.innerText = 'Keterangan:';
             containerKeterangan.innerHTML = `<input type="text" id="keteranganInput" placeholder="Masukkan Keterangan (Opsional)">`;
@@ -732,7 +1013,7 @@
             labelKeterangan.innerText = 'Keterangan:';
             containerKeterangan.innerHTML = `
                 <select id="keteranganSelect" required>
-					<option value="">-- Pilih Bulan --</option>
+                    <option value="">-- Pilih Bulan --</option>
                     <option value="Jan">Januari</option>
                     <option value="Feb">Februari</option>
                     <option value="Mar">Maret</option>
@@ -769,7 +1050,7 @@
             keterangan: ''
         };
 
-		if (jenis === 'masuk') {
+        if (jenis === 'masuk') {
             namaUraian = document.getElementById('namaUraianSelect').value;
             jenisStatus = 'In'; 
             dataValues.status = jenisStatus;
@@ -791,12 +1072,12 @@
                 // Pengecekan khusus jika nama yang dipilih adalah Kokom
                 if (namaUraian === 'Kokom') {
                     dataValues.ITB = 50000;
-                    dataValues.IWB = 80000; // IWB diset 80.000 khusus Kokom
-                    dataValues.IPD = 25000;
-                    dataValues.SS = 15000;
+                    dataValues.SS = 100000;  // SS diset 100.000 khusus Kokom
+                    dataValues.IWB = 50000;  // IWB diset 50.000 khusus Kokom
+                    dataValues.IPD = 50000;  // IPD diset 50.000 khusus Kokom
                     dataValues.Rihlah = 30000;
-                    dataValues.Kas = 20000;
-                    dataValues.Taawun = 10000;
+                    dataValues.Kas = 85000;  // Kas diset 85.000 khusus Kokom
+                    dataValues.Taawun = 10000; // Total menjadi 375.000
                 } else {
                     // Nilai standar untuk anggota lainnya
                     dataValues.ITB = 50000;
@@ -809,6 +1090,7 @@
                 }
             }
         } else {
+            // Menerima uraian sebagaimana yang diketik user meskipun tidak memilih dari daftar saran
             namaUraian = document.getElementById('namaUraianInput').value;
             keterangan = document.getElementById('keteranganInput').value || '-';
             jenisStatus = 'Out'; 
