@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kas Usar 2026</title>
+    <title>Kas Usar AD3P 2026</title>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -26,6 +26,8 @@
         .container {
             max-width: 600px;
             margin: 0 auto;
+            position: relative;
+            padding-bottom: 40px;
         }
 
         /* Header Utama dengan Titik Tiga */
@@ -212,34 +214,6 @@
             font-size: 14px;
         }
 
-        /* Dropdown Saran untuk Uraian/Nama Out */
-        .suggestions-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #fff;
-            border: 1px solid #cbd5e1;
-            border-top: none;
-            border-bottom-left-radius: 10px;
-            border-bottom-right-radius: 10px;
-            max-height: 150px;
-            overflow-y: auto;
-            z-index: 50;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            display: none;
-        }
-
-        .suggestion-item {
-            padding: 10px 12px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .suggestion-item:hover {
-            background-color: #f1f5f9;
-        }
-
         .btn-group {
             margin-top: 20px;
         }
@@ -291,12 +265,16 @@
             flex: 1;
         }
 
-        #sectionKeluar h3 {
+        #sectionMasukKhusus h3, #sectionKeluar h3 {
             font-size: 1rem;
             margin: 16px 0 10px 0;
-            color: var(--danger-color);
+            color: var(--primary-color);
             border-bottom: 1px dashed #cbd5e1;
             padding-bottom: 4px;
+        }
+
+        #sectionKeluar h3 {
+            color: var(--danger-color);
         }
 
         .hidden {
@@ -310,6 +288,39 @@
             margin-top: 12px;
             font-size: 14px;
         }
+
+        /* Styling Snackbar */
+        #snackbar {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 14px;
+            position: fixed;
+            z-index: 1000;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 14px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        #snackbar.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 10s;
+        }
+
+        @keyframes fadein {
+            from { bottom: 0; opacity: 0; }
+            to { bottom: 30px; opacity: 1; }
+        }
+
+        @keyframes fadeout {
+            from { bottom: 30px; opacity: 1; }
+            to { bottom: 0; opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -318,7 +329,7 @@
     <!-- HEADER UTAMA -->
     <div class="main-header">
         <div style="width: 32px;"></div>
-        <h1>Kas Usar 2026</h1>
+        <h1>Kas Usar AD3P 2026</h1>
         <div style="position: relative;">
             <button class="menu-btn" onclick="toggleMenu()">⋮</button>
             <div id="dropdownMenu" class="dropdown-menu">
@@ -398,11 +409,13 @@
                             <option value="Tuti">Tuti</option>
                             <option value="Umiyati">Umiyati</option>
                             <option value="Kas">Kas</option>
+                            <option value="Rihlah">Rihlah</option>
+                            <option value="Taawun">Taawun</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Kolom Keterangan / Jumlah Kas -->
+                <!-- Kolom Keterangan / Jumlah Kas / Rihlah / Taawun -->
                 <div class="form-group">
                     <label id="labelKeterangan" for="keteranganContainer">Keterangan:</label>
                     <div id="keteranganContainer">
@@ -422,6 +435,12 @@
                             <option value="Des">Desember</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- Field khusus Pemasukan Mandiri (Rihlah / Taawun) -->
+                <div id="sectionMasukKhusus" class="hidden">
+                    <h3 id="labelSubMasuk">Nilai Pemasukan</h3>
+                    <div class="form-group"><label id="labelNominalMasuk">Nominal:</label><input type="tel" inputmode="numeric" id="masuk_nominal_khusus" value="0" onkeyup="formatRibuan(this)"></div>
                 </div>
 
                 <!-- Field khusus Pengeluaran -->
@@ -511,18 +530,32 @@
     </div>
 </div>
 
+<!-- Snackbar Notifikasi -->
+<div id="snackbar">Laporan Tersalin</div>
+
 <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbyoFDSiQmmGrG6nh8EqOm1zhzqGOr9s97lspw6ZsAhtrAJH1AeSKezVf4zk05MUg1ln/exec';
     const spreadsheetId = '1ZK6EDgxTp5tIoqhi2S4nHw_GxjVWT7dtOz-3sU1UpdM'; 
     const gvizURL = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?sheet=Kas`;
 
     let allSheetRows = [];
-    let existingNamesList = ["Dian L", "Kholifah", "Kokom", "Roisah", "Teny", "Tuti", "Umiyati", "Kas"];
+    const memberNamesList = ["Dian L", "Kholifah", "Kokom", "Roisah", "Teny", "Tuti", "Umiyati", "Kas", "Rihlah", "Taawun"];
 
     window.onload = function() {
         loadSaldo();
         setDefaultBulanLaporan();
+        fetchAllRows();
     };
+
+    function fetchAllRows() {
+        fetch(gvizURL)
+            .then(res => res.text())
+            .then(rep => {
+                const jsonData = JSON.parse(rep.substring(47).slice(0, -2));
+                allSheetRows = jsonData.table.rows;
+            })
+            .catch(err => console.error('Gagal mengambil data baris:', err));
+    }
 
     function setDefaultBulanLaporan() {
         const bulanKode = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -549,11 +582,6 @@
                     openDropdown.style.display = 'none';
                 }
             }
-        }
-        // Sembunyikan saran dropdown nama jika klik di luar
-        if (!event.target.closest('#namaUraianContainer')) {
-            const sugg = document.getElementById('suggestionsList');
-            if (sugg) sugg.style.display = 'none';
         }
     }
 
@@ -585,6 +613,7 @@
             .then(rep => {
                 const jsonData = JSON.parse(rep.substring(47).slice(0, -2));
                 const rows = jsonData.table.rows;
+                allSheetRows = rows;
 
                 let totalITB = 0, totalIWB = 0, totalIPD = 0, totalSS = 0, totalRihlah = 0, totalKas = 0, totalTaawun = 0;
 
@@ -641,7 +670,6 @@
             });
     }
 
-    // Helper parsing tanggal untuk keperluan tampilan & ekstraksi tahun
     function parseDateObj(val) {
         if (!val) return null;
         let d = null;
@@ -693,11 +721,10 @@
         return `${dayName}, ${dayNum} ${monthName}`;  
     }
 
-    // FITUR BUAT LAPORAN BULANAN
     function generateLaporan() {
-        const bulanDipilih = document.getElementById('laporanBulan').value; // misal: "Jan", "Feb", "Agu"
-        const tahunDipilih = document.getElementById('laporanTahun').value; // misal: "2026"
-        const yy = tahunDipilih.slice(-2); // misal: "26"
+        const bulanDipilih = document.getElementById('laporanBulan').value;
+        const tahunDipilih = document.getElementById('laporanTahun').value;
+        const yy = tahunDipilih.slice(-2);
 
         document.getElementById('loadingLaporan').classList.remove('hidden');
         document.getElementById('hasilLaporanContainer').classList.add('hidden');
@@ -708,10 +735,7 @@
                 const jsonData = JSON.parse(rep.substring(47).slice(0, -2));
                 const rows = jsonData.table.rows;
 
-                // Daftar urutan anggota (selain "Kas")
                 const daftarAnggota = ["Dian L", "Kholifah", "Kokom", "Roisah", "Teny", "Tuti", "Umiyati"];
-                
-                // Inisialisasi objek penampung per anggota
                 let rekapAnggota = {};
                 daftarAnggota.forEach(nama => {
                     rekapAnggota[nama] = { ITB: 0, IWB: 0, SS: 0, IPD: 0, adaTransaksi: false };
@@ -732,12 +756,9 @@
                     let ss  = row.c[6] ? (Number(row.c[6].v) || 0) : 0;
                     let keterangan = row.c[10] ? String(row.c[10].v || '').trim() : '';
 
-                    // Cek tahun dari kolom waktu
                     let dateObj = parseDateObj(waktuVal);
                     let rowYear = dateObj ? String(dateObj.getFullYear()) : '';
 
-                    // Cocokkan Status = In, Keterangan bulan sesuai, dan Tahun sesuai
-                    // Antisipasi variasi penulisan bulan Agustus ("Agu" atau "Agt")
                     let bulanCocok = (keterangan.toLowerCase() === bulanDipilih.toLowerCase()) ||
                                      (bulanDipilih === 'Agu' && keterangan.toLowerCase() === 'agt');
 
@@ -748,12 +769,11 @@
                             rekapAnggota[nama].SS  += ss;
                             rekapAnggota[nama].IPD += ipd;
                             rekapAnggota[nama].adaTransaksi = true;
-                        } else if (nama !== 'Kas' && nama !== '') {
-                            // Jika ada nama anggota baru di luar daftar default
+                        } else if (nama !== 'Kas' && nama !== 'Rihlah' && nama !== 'Taawun' && nama !== '') {
                             rekapAnggota[nama] = { ITB: itb, IWB: iwb, SS: ss, IPD: ipd, adaTransaksi: true };
                         }
 
-                        if (nama !== 'Kas') {
+                        if (nama !== 'Kas' && nama !== 'Rihlah' && nama !== 'Taawun') {
                             totalAll.ITB += itb;
                             totalAll.IWB += iwb;
                             totalAll.SS  += ss;
@@ -762,7 +782,6 @@
                     }
                 });
 
-                // Susun teks laporan sesuai format yang diminta
                 let teks = `LAPORAN IURAN & INFAQ\n`;
                 teks += `BULANAN UPA\n\n`;
                 teks += `Kode UPA: AD3P\n`;
@@ -773,26 +792,22 @@
                 Object.keys(rekapAnggota).forEach(nama => {
                     const data = rekapAnggota[nama];
                     teks += `${nomor}. ${nama}\n`;
-                    teks += `        - ITB = Rp ${data.ITB.toLocaleString('id-ID')}\n`;
+                    teks += `        - ITB = Rp. ${data.ITB.toLocaleString('id-ID')}\n`;
                     teks += `        - IWB = Rp ${data.IWB.toLocaleString('id-ID')}\n`;
-                    teks += `        - SS = Rp ${data.SS.toLocaleString('id-ID')}\n`;
-                    teks += `        - IPD = Rp ${data.IPD.toLocaleString('id-ID')}\n`;
+                    teks += `        - SS = Rp. ${data.SS.toLocaleString('id-ID')}\n`;
+                    teks += `        - IPD = Rp. ${data.IPD.toLocaleString('id-ID')}\n`;
                     nomor++;
                 });
 
                 teks += `\nJumlah:\n`;
-                teks += `        - ITB = Rp ${totalAll.ITB.toLocaleString('id-ID')}\n`;
+                teks += `        - ITB = Rp. ${totalAll.ITB.toLocaleString('id-ID')}\n`;
                 teks += `        - IWB = Rp ${totalAll.IWB.toLocaleString('id-ID')}\n`;
-                teks += `        - SS = Rp ${totalAll.SS.toLocaleString('id-ID')}\n`;
-                teks += `        - IPD = Rp ${totalAll.IPD.toLocaleString('id-ID')}`;
+                teks += `        - SS = Rp. ${totalAll.SS.toLocaleString('id-ID')}\n`;
+                teks += `        - IPD = Rp. ${totalAll.IPD.toLocaleString('id-ID')}`;
 
                 document.getElementById('teksLaporan').innerText = teks;
                 document.getElementById('loadingLaporan').classList.add('hidden');
                 document.getElementById('hasilLaporanContainer').classList.remove('hidden');
-
-                // Reset tombol copy
-                const btnCopy = document.getElementById('btnCopyLaporan');
-                btnCopy.innerText = 'Copy Laporan';
             })
             .catch(err => {
                 console.error('Gagal membuat laporan:', err);
@@ -800,23 +815,24 @@
             });
     }
 
+    function showSnackbar() {
+        const x = document.getElementById("snackbar");
+        x.className = "show";
+        setTimeout(() => { x.className = x.className.replace("show", ""); }, 10000);
+    }
+
     function copyLaporan() {
         const teks = document.getElementById('teksLaporan').innerText;
         navigator.clipboard.writeText(teks).then(() => {
-            const btnCopy = document.getElementById('btnCopyLaporan');
-            btnCopy.innerText = 'Tersalin! ✓';
-            setTimeout(() => {
-                btnCopy.innerText = 'Copy Laporan';
-            }, 2500);
+            showSnackbar();
         }).catch(err => {
-            // Fallback untuk browser lama
             const textArea = document.createElement("textarea");
             textArea.value = teks;
             document.body.appendChild(textArea);
             textArea.select();
             document.execCommand("copy");
             document.body.removeChild(textArea);
-            alert('Laporan berhasil disalin!');
+            showSnackbar();
         });
     }
 
@@ -914,11 +930,23 @@
         const selectedValue = selectObj.value;
         const labelKeterangan = document.getElementById('labelKeterangan');
         const containerKeterangan = document.getElementById('keteranganContainer');
+        const sectionMasukKhusus = document.getElementById('sectionMasukKhusus');
+        const labelSubMasuk = document.getElementById('labelSubMasuk');
+        const labelNominalMasuk = document.getElementById('labelNominalMasuk');
 
         if (selectedValue === 'Kas') {
+            sectionMasukKhusus.classList.add('hidden');
             labelKeterangan.innerText = 'Jumlah Kas:';
             containerKeterangan.innerHTML = `<input type="tel" inputmode="numeric" id="jumlahKasInput" required placeholder="Masukkan Jumlah Kas" onkeyup="formatRibuan(this)">`;
+        } else if (selectedValue === 'Rihlah' || selectedValue === 'Taawun') {
+            sectionMasukKhusus.classList.remove('hidden');
+            labelSubMasuk.innerText = `Nilai Pemasukan ${selectedValue}`;
+            labelNominalMasuk.innerText = `${selectedValue}:`;
+            
+            labelKeterangan.innerText = 'Keterangan:';
+            containerKeterangan.innerHTML = `<input type="text" id="keteranganInputKhusus" placeholder="Masukkan Keterangan (Opsional)" autocomplete="off">`;
         } else {
+            sectionMasukKhusus.classList.add('hidden');
             labelKeterangan.innerText = 'Keterangan:';
             containerKeterangan.innerHTML = `
                 <select id="keteranganSelect" required>
@@ -940,37 +968,76 @@
         }
     }
 
-    // Fungsi untuk menangani input teks sebagian dengan saran (Autocomplete) pada form Out
-    function handleOutInputKeyup(inputElem) {
-        const val = inputElem.value.toLowerCase().trim();
-        const suggList = document.getElementById('suggestionsList');
-        
+    // Handler ketika dropdown Nama/Uraian Out dipilih
+    function handleOutNamaChange(selectObj) {
+        const val = selectObj.value;
+        const freeTextContainer = document.getElementById('freeTextContainer');
+
+        if (val === 'Lainnya') {
+            freeTextContainer.classList.remove('hidden');
+            document.getElementById('namaUraianFreeText').setAttribute('required', 'true');
+            // Reset nilai ke 0 jika pilih lainnya
+            document.getElementById('keluar_ITB').value = '0';
+            document.getElementById('keluar_IWB').value = '0';
+            document.getElementById('keluar_IPD').value = '0';
+            document.getElementById('keluar_SS').value = '0';
+            document.getElementById('keluar_Rihlah').value = '0';
+            document.getElementById('keluar_Kas').value = '0';
+            document.getElementById('keluar_Taawun').value = '0';
+            return;
+        } else {
+            freeTextContainer.classList.add('hidden');
+            document.getElementById('namaUraianFreeText').removeAttribute('required');
+            document.getElementById('namaUraianFreeText').value = '';
+        }
+
         if (!val) {
-            suggList.style.display = 'none';
+            document.getElementById('keluar_ITB').value = '0';
+            document.getElementById('keluar_IWB').value = '0';
+            document.getElementById('keluar_IPD').value = '0';
+            document.getElementById('keluar_SS').value = '0';
+            document.getElementById('keluar_Rihlah').value = '0';
+            document.getElementById('keluar_Kas').value = '0';
+            document.getElementById('keluar_Taawun').value = '0';
             return;
         }
 
-        const filtered = existingNamesList.filter(name => name.toLowerCase().includes(val));
-        if (filtered.length > 0) {
-            let html = '';
-            filtered.forEach(item => {
-                html += `<div class="suggestion-item" onclick="selectSuggestion('${item}')">${item}</div>`;
-            });
-            suggList.innerHTML = html;
-            suggList.style.display = 'block';
-        } else {
-            suggList.style.display = 'none';
-        }
-    }
+        // Cari transaksi "in" terakhir dari nama yang dipilih
+        let lastITB = 0, lastIWB = 0, lastIPD = 0, lastSS = 0;
+        
+        if (allSheetRows && allSheetRows.length > 0) {
+            for (let i = allSheetRows.length - 1; i >= 0; i--) {
+                const row = allSheetRows[i];
+                if (row && row.c) {
+                    const rowNama = row.c[1] ? String(row.c[1].v || '').trim() : '';
+                    const rowStatus = row.c[2] ? String(row.c[2].v || '').trim() : '';
 
-    function selectSuggestion(val) {
-        document.getElementById('namaUraianInput').value = val;
-        document.getElementById('suggestionsList').style.display = 'none';
+                    if (rowNama.toLowerCase() === val.toLowerCase() && rowStatus.toLowerCase() === 'in') {
+                        lastITB = row.c[3] ? (Number(row.c[3].v) || 0) : 0;
+                        lastIWB = row.c[4] ? (Number(row.c[4].v) || 0) : 0;
+                        lastIPD = row.c[5] ? (Number(row.c[5].v) || 0) : 0;
+                        lastSS  = row.c[6] ? (Number(row.c[6].v) || 0) : 0;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Set nilai form pengeluaran (ITB, IWB, IPD, SS terisi nilai "in" terakhir; Rihlah, Kas, Taawun = 0)
+        document.getElementById('keluar_ITB').value = lastITB ? lastITB.toLocaleString('id-ID') : '0';
+        document.getElementById('keluar_IWB').value = lastIWB ? lastIWB.toLocaleString('id-ID') : '0';
+        document.getElementById('keluar_IPD').value = lastIPD ? lastIPD.toLocaleString('id-ID') : '0';
+        document.getElementById('keluar_SS').value  = lastSS ? lastSS.toLocaleString('id-ID') : '0';
+        
+        document.getElementById('keluar_Rihlah').value = '0';
+        document.getElementById('keluar_Kas').value = '0';
+        document.getElementById('keluar_Taawun').value = '0';
     }
 
     function toggleForm() {
         const jenis = document.getElementById('jenisTransaksi').value;
         const sectionKeluar = document.getElementById('sectionKeluar');
+        const sectionMasukKhusus = document.getElementById('sectionMasukKhusus');
         const btnSubmit = document.getElementById('btnSubmit');
         const labelNamaUraian = document.getElementById('labelNamaUraian');
         const containerNama = document.getElementById('namaUraianContainer');
@@ -979,19 +1046,31 @@
 
         if (jenis === 'keluar') {
             sectionKeluar.classList.remove('hidden');
+            sectionMasukKhusus.classList.add('hidden');
             btnSubmit.className = 'btn-keluar';
             btnSubmit.innerText = 'Simpan Pengeluaran';
             
             labelNamaUraian.innerText = 'Nama / Uraian:';
+            let optionsHtml = '<option value="">-- Pilih Nama / Uraian --</option>';
+            memberNamesList.forEach(name => {
+                optionsHtml += `<option value="${name}">${name}</option>`;
+            });
+            optionsHtml += '<option value="Lainnya">Lainnya (Ketik Uraian)</option>';
+
             containerNama.innerHTML = `
-                <input type="text" id="namaUraianInput" required placeholder="Masukkan Nama atau Uraian" autocomplete="off" onkeyup="handleOutInputKeyup(this)">
-                <div id="suggestionsList" class="suggestions-list"></div>
+                <select id="namaUraianSelectOut" required onchange="handleOutNamaChange(this)">
+                    ${optionsHtml}
+                </select>
+                <div id="freeTextContainer" class="hidden" style="margin-top: 8px;">
+                    <input type="text" id="namaUraianFreeText" placeholder="Ketik Uraian" autocomplete="off">
+                </div>
             `;
             
             labelKeterangan.innerText = 'Keterangan:';
             containerKeterangan.innerHTML = `<input type="text" id="keteranganInput" placeholder="Masukkan Keterangan (Opsional)">`;
         } else {
             sectionKeluar.classList.add('hidden');
+            sectionMasukKhusus.classList.add('hidden');
             btnSubmit.className = 'btn-masuk';
             btnSubmit.innerText = 'Simpan Pemasukan';
             
@@ -1007,6 +1086,8 @@
                     <option value="Tuti">Tuti</option>
                     <option value="Umiyati">Umiyati</option>
                     <option value="Kas">Kas</option>
+                    <option value="Rihlah">Rihlah</option>
+                    <option value="Taawun">Taawun</option>
                 </select>
             `;
             
@@ -1065,21 +1146,37 @@
                 dataValues.Rihlah = 0;
                 dataValues.Kas = parseNumber('jumlahKasInput');
                 dataValues.Taawun = 0;
+            } else if (namaUraian === 'Rihlah') {
+                dataValues.keterangan = document.getElementById('keteranganInputKhusus').value || '-';
+                dataValues.ITB = 0;
+                dataValues.IWB = 0;
+                dataValues.IPD = 0;
+                dataValues.SS = 0;
+                dataValues.Rihlah = parseNumber('masuk_nominal_khusus');
+                dataValues.Kas = 0;
+                dataValues.Taawun = 0;
+            } else if (namaUraian === 'Taawun') {
+                dataValues.keterangan = document.getElementById('keteranganInputKhusus').value || '-';
+                dataValues.ITB = 0;
+                dataValues.IWB = 0;
+                dataValues.IPD = 0;
+                dataValues.SS = 0;
+                dataValues.Rihlah = 0;
+                dataValues.Kas = 0;
+                dataValues.Taawun = parseNumber('masuk_nominal_khusus');
             } else {
                 keterangan = document.getElementById('keteranganSelect').value;
                 dataValues.keterangan = keterangan;
                 
-                // Pengecekan khusus jika nama yang dipilih adalah Kokom
                 if (namaUraian === 'Kokom') {
                     dataValues.ITB = 50000;
-                    dataValues.SS = 100000;  // SS diset 100.000 khusus Kokom
-                    dataValues.IWB = 50000;  // IWB diset 50.000 khusus Kokom
-                    dataValues.IPD = 50000;  // IPD diset 50.000 khusus Kokom
+                    dataValues.SS = 100000;
+                    dataValues.IWB = 50000;
+                    dataValues.IPD = 50000;
                     dataValues.Rihlah = 30000;
-                    dataValues.Kas = 85000;  // Kas diset 85.000 khusus Kokom
-                    dataValues.Taawun = 10000; // Total menjadi 375.000
+                    dataValues.Kas = 85000;
+                    dataValues.Taawun = 10000;
                 } else {
-                    // Nilai standar untuk anggota lainnya
                     dataValues.ITB = 50000;
                     dataValues.IWB = 0; 
                     dataValues.IPD = 25000;
@@ -1090,8 +1187,13 @@
                 }
             }
         } else {
-            // Menerima uraian sebagaimana yang diketik user meskipun tidak memilih dari daftar saran
-            namaUraian = document.getElementById('namaUraianInput').value;
+            const selectedOutVal = document.getElementById('namaUraianSelectOut').value;
+            if (selectedOutVal === 'Lainnya') {
+                namaUraian = document.getElementById('namaUraianFreeText').value;
+            } else {
+                namaUraian = selectedOutVal;
+            }
+
             keterangan = document.getElementById('keteranganInput').value || '-';
             jenisStatus = 'Out'; 
 
@@ -1123,7 +1225,10 @@
             
             window.scrollTo({ top: 0, behavior: 'smooth' });
             
-            setTimeout(loadSaldo, 2000);
+            setTimeout(() => {
+                loadSaldo();
+                fetchAllRows();
+            }, 2000);
         })
         .catch(error => {
             console.error('Error!', error.message);
